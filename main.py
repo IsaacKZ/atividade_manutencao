@@ -57,8 +57,11 @@ def menu_principal():
             cpf = input("CPF: ")
             email = input("Email: ")
             telefone = input("Telefone: ")
-            cadastrar_cliente(nome, cpf, email, telefone)
-            print("Cliente cadastrado com sucesso!")
+            try:
+                cadastrar_cliente(nome, cpf, email, telefone)
+                print("Cliente cadastrado com sucesso!")
+            except ValueError as erro:
+                print(f"Erro ao cadastrar cliente: {erro}")
 
         elif opcao == "2":
             exibir_clientes()
@@ -70,14 +73,21 @@ def menu_principal():
             cpf = input("Novo CPF: ")
             email = input("Novo email: ")
             telefone = input("Novo telefone: ")
-            editar_cliente(id_cliente, nome, cpf, email, telefone)
-            print("Cliente atualizado com sucesso!")
+            if editar_cliente(id_cliente, nome, cpf, email, telefone):
+                print("Cliente atualizado com sucesso!")
+            else:
+                print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
 
         elif opcao == "4":
             exibir_clientes()
             id_cliente = input("ID do cliente a excluir: ")
-            excluir_cliente(id_cliente)
-            print("Cliente excluído com sucesso!")
+            confirmacao = input(f"Tem certeza que deseja excluir o cliente {id_cliente}? (s/n): ")
+            if confirmacao.strip().lower() != "s":
+                print("Exclusão cancelada.")
+            elif excluir_cliente(id_cliente):
+                print("Cliente excluído com sucesso!")
+            else:
+                print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
 
         elif opcao == "0":
             print("Saindo...")

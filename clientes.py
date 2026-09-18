@@ -1,10 +1,40 @@
 from database import conectar
 
-def cadastrar_cliente(nome, cpf, email, telefone): # ERRO 1: ENTRADA SEM VALIDAÇÃO
+
+def validar_cpf(cpf):
+    return cpf.isdigit() and len(cpf) == 11
+
+
+def cpf_ja_cadastrado(cpf):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT 1 FROM clientes WHERE cpf = ?", (cpf,))
+    existe = cursor.fetchone() is not None
+    conexao.close()
+    return existe
+
+
+def cliente_existe(id_cliente):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT 1 FROM clientes WHERE id = ?", (id_cliente,))
+    existe = cursor.fetchone() is not None
+    conexao.close()
+    return existe
+
+
+def cadastrar_cliente(nome, cpf, email, telefone):
+    if not nome.strip():
+        raise ValueError("o nome não pode ficar vazio.")
+    if not validar_cpf(cpf):
+        raise ValueError("CPF inválido. Informe 11 dígitos numéricos.")
+    if cpf_ja_cadastrado(cpf):
+        raise ValueError("já existe um cliente cadastrado com esse CPF.")
+
     conexao = conectar()
     cursor = conexao.cursor()
     cursor.execute(
-        "INSERT INTO clientes (nome, cpf, email, telefone) VALUES (?, ?, ?, ?)", 
+        "INSERT INTO clientes (nome, cpf, email, telefone) VALUES (?, ?, ?, ?)",
         (nome, cpf, email, telefone),
     )
     conexao.commit()
@@ -20,7 +50,10 @@ def listar_clientes():
     return clientes
 
 
-def editar_cliente(id_cliente, nome, cpf, email, telefone): # ERRO 2: MESMO SE O ID NÃO EXISTIR, O UPDATE/DELETE DA "SUCESSO"
+def editar_cliente(id_cliente, nome, cpf, email, telefone):
+    if not cliente_existe(id_cliente):
+        return False
+
     conexao = conectar()
     cursor = conexao.cursor()
     cursor.execute(
@@ -29,11 +62,16 @@ def editar_cliente(id_cliente, nome, cpf, email, telefone): # ERRO 2: MESMO SE O
     )
     conexao.commit()
     conexao.close()
+    return True
 
 
-def excluir_cliente(id_cliente): # ERRO 3: SEM CONFIRMAÇÃO DE EXCLUSÃO - ERRO DE USABILIDADE    
+def excluir_cliente(id_cliente):
+    if not cliente_existe(id_cliente):
+        return False
+
     conexao = conectar()
     cursor = conexao.cursor()
     cursor.execute("DELETE FROM clientes WHERE id=?", (id_cliente,))
     conexao.commit()
     conexao.close()
+    return True
