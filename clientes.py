@@ -1,4 +1,4 @@
-from database import conectar
+from database import conectar # IMPORTA DO OUTRO ARQUIVO PYTHON, PARA FACILITAR MANUTENÇÃO
 
 
 def validar_cpf(cpf):

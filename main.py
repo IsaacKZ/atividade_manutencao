@@ -13,13 +13,12 @@ def tela_login():
     print("\nUsuário ou senha inválidos.\n")
     return False
 
-
+# CONSTANTES PARA FACILITAR MANUTENÇÃO DO CÓDIGO
 LARGURA_ID = 4
 LARGURA_NOME = 20
 LARGURA_CPF = 15
 LARGURA_EMAIL = 25
 LARGURA_TELEFONE = 15
-
 
 def formatar_linha(id_cliente, nome, cpf, email, telefone):
     return (
@@ -60,7 +59,7 @@ def menu_principal():
             try:
                 cadastrar_cliente(nome, cpf, email, telefone)
                 print("Cliente cadastrado com sucesso!")
-            except ValueError as erro:
+            except ValueError as erro: # PRINT DO ERRO
                 print(f"Erro ao cadastrar cliente: {erro}")
 
         elif opcao == "2":

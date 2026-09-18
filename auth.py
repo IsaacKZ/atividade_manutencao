@@ -1,7 +1,7 @@
 from database import conectar
 
-def login(username, senha):
-    conexao = conectar()
+def login(username, senha): # USUARIO: admin    
+    conexao = conectar()    # SENHA:   admin123
     cursor = conexao.cursor()
     cursor.execute(
         "SELECT id FROM usuarios WHERE username = ? AND senha = ?",
