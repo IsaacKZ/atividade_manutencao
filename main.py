@@ -65,14 +65,14 @@ def menu_principal():
         elif opcao == "2":
             exibir_clientes()
 
-        elif opcao == "3":
             exibir_clientes()
             id_cliente = input("ID do cliente a editar: ")
             nome = input("Novo nome: ")
             cpf = input("Novo CPF: ")
             email = input("Novo email: ")
             telefone = input("Novo telefone: ")
-            if editar_cliente(id_cliente, nome, cpf, email, telefone):
+        elif opcao == "3":  # ERRO 2 CORRIGIDO: MESMO SE O ID NÃO EXISTIR, O UPDATE/DELETE DA "SUCESSO"
+            if editar_cliente(id_cliente, nome, cpf, email, telefone): 
                 print("Cliente atualizado com sucesso!")
             else:
                 print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
@@ -80,7 +80,7 @@ def menu_principal():
         elif opcao == "4":
             exibir_clientes()
             id_cliente = input("ID do cliente a excluir: ")
-            confirmacao = input(f"Tem certeza que deseja excluir o cliente {id_cliente}? (s/n): ")
+            confirmacao = input(f"Tem certeza que deseja excluir o cliente {id_cliente}? (s/n): ") # ERRO 3 CORRIGIDO: SEM CONFIRMAÇÃO DE EXCLUSÃO - ERRO DE USABILIDADE    
             if confirmacao.strip().lower() != "s":
                 print("Exclusão cancelada.")
             elif excluir_cliente(id_cliente):

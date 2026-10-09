@@ -5,7 +5,7 @@ def validar_cpf(cpf):
     return cpf.isdigit() and len(cpf) == 11
 
 
-def cpf_ja_cadastrado(cpf):
+def cpf_ja_cadastrado(cpf): 
     conexao = conectar()
     cursor = conexao.cursor()
     cursor.execute("SELECT 1 FROM clientes WHERE cpf = ?", (cpf,))
@@ -23,7 +23,7 @@ def cliente_existe(id_cliente):
     return existe
 
 
-def cadastrar_cliente(nome, cpf, email, telefone):
+def cadastrar_cliente(nome, cpf, email, telefone): # ERRO 1 CORRIGIDO: ENTRADA SEM VALIDAÇÃO
     if not nome.strip():
         raise ValueError("o nome não pode ficar vazio.")
     if not validar_cpf(cpf):
@@ -65,7 +65,7 @@ def editar_cliente(id_cliente, nome, cpf, email, telefone):
     return True
 
 
-def excluir_cliente(id_cliente):
+def excluir_cliente(id_cliente): 
     if not cliente_existe(id_cliente):
         return False
 
