@@ -1,6 +1,17 @@
-from database import inicializar_banco
 from auth import login
-from clientes import cadastrar_cliente, listar_clientes, editar_cliente, excluir_cliente
+from clientes import (
+    cadastrar_cliente,
+    editar_cliente,
+    excluir_cliente,
+    listar_clientes,
+)
+from database import inicializar_banco
+
+LARGURA_ID = 4
+LARGURA_NOME = 20
+LARGURA_CPF = 15
+LARGURA_EMAIL = 25
+LARGURA_TELEFONE = 15
 
 
 def tela_login():
@@ -13,12 +24,6 @@ def tela_login():
     print("\nUsuário ou senha inválidos.\n")
     return False
 
-# CONSTANTES PARA FACILITAR MANUTENÇÃO DO CÓDIGO
-LARGURA_ID = 4
-LARGURA_NOME = 20
-LARGURA_CPF = 15
-LARGURA_EMAIL = 25
-LARGURA_TELEFONE = 15
 
 def formatar_linha(id_cliente, nome, cpf, email, telefone):
     return (
@@ -41,6 +46,50 @@ def exibir_clientes():
         print(formatar_linha(id_cliente, nome, cpf, email, telefone))
 
 
+def ler_dados_cliente(edicao=False):
+    nome = input("Novo nome: " if edicao else "Nome: ")
+    cpf = input("Novo CPF: " if edicao else "CPF: ")
+    email = input("Novo email: " if edicao else "Email: ")
+    telefone = input("Novo telefone: " if edicao else "Telefone: ")
+    return nome, cpf, email, telefone
+
+
+def cadastrar_pelo_menu():
+    nome, cpf, email, telefone = ler_dados_cliente()
+    try:
+        cadastrar_cliente(nome, cpf, email, telefone)
+        print("Cliente cadastrado com sucesso!")
+    except ValueError as erro:
+        print(f"Erro ao cadastrar cliente: {erro}")
+
+
+def editar_pelo_menu():
+    exibir_clientes()
+    id_cliente = input("ID do cliente a editar: ")
+    nome, cpf, email, telefone = ler_dados_cliente(edicao=True)
+    try:
+        if editar_cliente(id_cliente, nome, cpf, email, telefone):
+            print("Cliente atualizado com sucesso!")
+        else:
+            print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
+    except ValueError as erro:
+        print(f"Erro ao editar cliente: {erro}")
+
+
+def excluir_pelo_menu():
+    exibir_clientes()
+    id_cliente = input("ID do cliente a excluir: ")
+    confirmacao = input(
+        f"Tem certeza que deseja excluir o cliente {id_cliente}? (s/n): "
+    )
+    if confirmacao.strip().lower() != "s":
+        print("Exclusão cancelada.")
+    elif excluir_cliente(id_cliente):
+        print("Cliente excluído com sucesso!")
+    else:
+        print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
+
+
 def menu_principal():
     while True:
         print("\n=== MENU ===")
@@ -52,41 +101,13 @@ def menu_principal():
         opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
-            nome = input("Nome: ")
-            cpf = input("CPF: ")
-            email = input("Email: ")
-            telefone = input("Telefone: ")
-            try:
-                cadastrar_cliente(nome, cpf, email, telefone)
-                print("Cliente cadastrado com sucesso!")
-            except ValueError as erro: # PRINT DO ERRO
-                print(f"Erro ao cadastrar cliente: {erro}")
-
+            cadastrar_pelo_menu()
         elif opcao == "2":
             exibir_clientes()
-
-            exibir_clientes()
-            id_cliente = input("ID do cliente a editar: ")
-            nome = input("Novo nome: ")
-            cpf = input("Novo CPF: ")
-            email = input("Novo email: ")
-            telefone = input("Novo telefone: ")
-        elif opcao == "3":  # ERRO 2 CORRIGIDO: MESMO SE O ID NÃO EXISTIR, O UPDATE/DELETE DA "SUCESSO"
-            if editar_cliente(id_cliente, nome, cpf, email, telefone): 
-                print("Cliente atualizado com sucesso!")
-            else:
-                print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
-
+        elif opcao == "3":
+            editar_pelo_menu()
         elif opcao == "4":
-            exibir_clientes()
-            id_cliente = input("ID do cliente a excluir: ")
-            confirmacao = input(f"Tem certeza que deseja excluir o cliente {id_cliente}? (s/n): ") # ERRO 3 CORRIGIDO: SEM CONFIRMAÇÃO DE EXCLUSÃO - ERRO DE USABILIDADE    
-            if confirmacao.strip().lower() != "s":
-                print("Exclusão cancelada.")
-            elif excluir_cliente(id_cliente):
-                print("Cliente excluído com sucesso!")
-            else:
-                print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
+            excluir_pelo_menu()
 
         elif opcao == "0":
             print("Saindo...")
@@ -96,8 +117,12 @@ def menu_principal():
             print("Opção inválida.")
 
 
-if __name__ == "__main__":
+def iniciar():
     inicializar_banco()
     while not tela_login():
         pass
     menu_principal()
+
+
+if __name__ == "__main__":
+    iniciar()
