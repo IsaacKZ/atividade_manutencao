@@ -13,8 +13,17 @@ para uso local, conforme solicitado.
   Usuários e clientes já existentes não são apagados ou substituídos.
 - Foram retirados `hashlib`, `hmac`, `secrets`, `contextlib` e `pathlib` da
   aplicação. Ela usa apenas `os` e `sqlite3` da biblioteca padrão.
-- `try`/`finally` e `close()` substituem o fechamento por `closing()`, deixando
-  explícito onde cada conexão termina. As consultas mantêm os parâmetros `?`.
+- `consultar()` e `executar()`, em `database.py`, concentram a abertura e o
+  fechamento das conexões. A primeira devolve resultados; a segunda confirma
+  a gravação e devolve quantas linhas foram afetadas. O SQL continua visível
+  nas funções de clientes e login, com os parâmetros `?`.
+- Edição e exclusão usam a quantidade de linhas afetadas para indicar sucesso.
+  A exclusão não precisa consultar a existência do cliente novamente no banco
+  antes de executar o `DELETE`.
+- A listagem usa `print()` com o separador `|`. Saíram a função de formatação
+  e as cinco constantes de largura, e campos nulos passaram a aparecer vazios.
+- A exclusão também verifica lista vazia e ID inexistente antes de perguntar
+  pela confirmação, seguindo o mesmo fluxo da edição.
 
 O login não modifica senhas. Contas que já tenham hash precisam de uma nova
 senha definida uma vez, conforme o comando do [README.md](README.md). Não é
@@ -32,6 +41,8 @@ possível recuperar o texto de uma senha a partir do hash.
 | Banco mudava conforme a pasta de execução. | Caminho padrão fixado na pasta do projeto. |
 | Editar sem clientes pedia dados desnecessários. | Retorno imediato ao menu quando a lista está vazia. |
 | ID inexistente ainda levava às perguntas de edição. | Conferência do ID antes dos novos dados. |
+| Exclusão pedia ID ou confirmação sem um cliente válido. | Retorno ao menu antes de fazer essas perguntas. |
+| Campos nulos interrompiam a lista e nomes longos deslocavam as colunas. | Impressão simples com separadores e campos vazios quando necessário. |
 
 A opção `SISTEMA_DB_PATH` continua disponível para usar um banco separado.
 CPFs antigos não são reescritos automaticamente. Email e telefone continuam
@@ -43,9 +54,12 @@ opcionais, e a exclusão mantém sua confirmação.
 python3 -B -m unittest discover -v
 ```
 
-A suíte atual tem 35 testes: login simples, preservação de usuários, caminho
+A suíte atual tem 38 testes: login simples, preservação de usuários, caminho
 do banco, CPF e operações de clientes, incluindo o programa real em subprocessos.
-Eles passaram com bancos temporários. Os testes exclusivos de hash, cadastro
+Nesta revisão, foram mantidos os 35 testes anteriores e adicionados três para
+exclusão sem clientes, exclusão com ID inexistente e listagem com nome longo
+e campos nulos. Os três falharam antes do ajuste e passaram depois.
+Todos passaram com bancos temporários. Os testes exclusivos de hash, cadastro
 inicial e troca obrigatória foram removidos porque essas funções deixaram de
 existir. Os testes das correções de funcionamento foram mantidos.
 

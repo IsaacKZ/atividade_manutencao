@@ -13,6 +13,26 @@ def conectar():
     return sqlite3.connect(DB_PATH)
 
 
+def consultar(sql, parametros=()):
+    """Executa uma consulta e devolve uma lista de linhas."""
+    conexao = conectar()
+    try:
+        return conexao.execute(sql, parametros).fetchall()
+    finally:
+        conexao.close()
+
+
+def executar(sql, parametros=()):
+    """Grava uma alteração e devolve a quantidade de linhas afetadas."""
+    conexao = conectar()
+    try:
+        resultado = conexao.execute(sql, parametros)
+        conexao.commit()
+        return resultado.rowcount
+    finally:
+        conexao.close()
+
+
 def inicializar_banco():
     """Cria as tabelas e o login inicial, sem apagar os dados existentes."""
     conexao = conectar()

@@ -96,6 +96,38 @@ class MenuTest(unittest.TestCase):
         self.assertEqual(saida.count("=== MENU ==="), 2)
         self.assertEqual(clientes.listar_clientes(), original)
 
+    def test_exclusao_sem_clientes_nao_pede_id_ou_confirmacao(self):
+        self.criar_usuario_antigo()
+        saida = self.executar("operador\nSenhaTeste123\n4\n0\n")
+        self.assertIn("Nenhum cliente cadastrado.", saida)
+        self.assertNotIn("ID do cliente a excluir:", saida)
+        self.assertNotIn("Tem certeza", saida)
+        self.assertEqual(saida.count("=== MENU ==="), 2)
+        self.assertEqual(clientes.listar_clientes(), [])
+
+    def test_exclusao_com_id_inexistente_nao_pede_confirmacao(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "", "")
+        original = clientes.listar_clientes()
+        saida = self.executar("operador\nSenhaTeste123\n4\n999\n0\n")
+        self.assertIn("nenhum cliente encontrado com o ID 999", saida)
+        self.assertNotIn("Tem certeza", saida)
+        self.assertEqual(saida.count("=== MENU ==="), 2)
+        self.assertEqual(clientes.listar_clientes(), original)
+
+    def test_lista_nome_longo_e_campos_nulos_sem_interromper_o_menu(self):
+        self.criar_usuario_antigo()
+        nome = "Nome de teste maior que a largura antiga da coluna"
+        conexao = database.conectar()
+        conexao.execute("INSERT INTO clientes (nome, cpf) VALUES (?, ?)", (nome, "52998224725"))
+        conexao.commit()
+        conexao.close()
+        original = clientes.listar_clientes()
+        saida = self.executar("operador\nSenhaTeste123\n2\n0\n")
+        self.assertIn("ID | Nome | CPF | Email | Telefone", saida)
+        self.assertIn(nome + " | 52998224725 |  | ", saida)
+        self.assertEqual(clientes.listar_clientes(), original)
+
 
 if __name__ == "__main__":
     unittest.main()

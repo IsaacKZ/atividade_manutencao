@@ -33,8 +33,10 @@ apagados nem modificados pela inicialização.
 - `database.py`: caminho do arquivo, conexão e criação das tabelas.
 
 A aplicação importa somente `os` (caminhos) e `sqlite3` (banco), além dos
-próprios arquivos do projeto. As conexões são fechadas explicitamente com
-`close()`. O bloco `finally` garante o fechamento mesmo se ocorrer um erro.
+próprios arquivos do projeto. Em `database.py`, `consultar()` devolve uma lista
+de resultados e `executar()` grava a alteração e devolve a quantidade de linhas
+afetadas. Elas fecham as conexões com `close()`, inclusive em caso de erro,
+evitando repetir esse código no login e nas operações de clientes.
 Não há hash, salt, iterações ou migração automática de senhas no programa.
 
 ## Regras e funcionamento
@@ -43,9 +45,11 @@ Não há hash, salt, iterações ou migração automática de senhas no programa
 - CPF deve ter 11 dígitos sem pontuação, sem sequência uniforme e com os dois
   verificadores corretos. O cálculo usa contas, `for` e `if`.
 - Cadastro e edição rejeitam CPF de outro cliente, mas permitem manter o próprio.
-- Sem clientes, editar retorna ao menu sem fazer perguntas. ID inexistente
-  também retorna antes de solicitar novos dados.
-- A listagem aparece uma vez. Exclusão continua pedindo confirmação.
+- Sem clientes, editar e excluir retornam ao menu sem fazer perguntas. ID
+  inexistente também retorna antes de solicitar dados ou confirmação.
+- A listagem aparece uma vez, com campos separados por `|`, sem larguras
+  fixas. Campos nulos importados aparecem vazios, e nomes longos são mantidos.
+- A exclusão de um cliente existente continua pedindo confirmação.
 - Email e telefone continuam opcionais, sem validação de formato.
 
 ## Se você já utilizou a versão com hash

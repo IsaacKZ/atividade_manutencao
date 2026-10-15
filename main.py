@@ -8,13 +8,6 @@ from clientes import (
 )
 from database import inicializar_banco
 
-LARGURA_ID = 4
-LARGURA_NOME = 20
-LARGURA_CPF = 15
-LARGURA_EMAIL = 25
-LARGURA_TELEFONE = 15
-
-
 def tela_login():
     """Pede o usuário e a senha para entrar no menu."""
     print("=== LOGIN ===")
@@ -27,16 +20,6 @@ def tela_login():
     return False
 
 
-def formatar_linha(id_cliente, nome, cpf, email, telefone):
-    return (
-        f"{id_cliente:<{LARGURA_ID}}"
-        f"{nome:<{LARGURA_NOME}}"
-        f"{cpf:<{LARGURA_CPF}}"
-        f"{email:<{LARGURA_EMAIL}}"
-        f"{telefone:<{LARGURA_TELEFONE}}"
-    )
-
-
 def exibir_clientes():
     """Lista uma vez e informa se há clientes para continuar uma ação."""
     clientes = listar_clientes()
@@ -44,9 +27,9 @@ def exibir_clientes():
         print("Nenhum cliente cadastrado.")
         return False
 
-    print(formatar_linha("ID", "Nome", "CPF", "Email", "Telefone"))
+    print("ID | Nome | CPF | Email | Telefone")
     for id_cliente, nome, cpf, email, telefone in clientes:
-        print(formatar_linha(id_cliente, nome, cpf, email, telefone))
+        print(id_cliente, nome or "", cpf or "", email or "", telefone or "", sep=" | ")
     return True
 
 
@@ -86,8 +69,12 @@ def editar_pelo_menu():
 
 
 def excluir_pelo_menu():
-    exibir_clientes()
+    if not exibir_clientes():
+        return
     id_cliente = input("ID do cliente a excluir: ")
+    if not cliente_existe(id_cliente):
+        print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
+        return
     confirmacao = input(
         f"Tem certeza que deseja excluir o cliente {id_cliente}? (s/n): "
     )
@@ -117,11 +104,9 @@ def menu_principal():
             editar_pelo_menu()
         elif opcao == "4":
             excluir_pelo_menu()
-
         elif opcao == "0":
             print("Saindo...")
             break
-
         else:
             print("Opção inválida.")
 
