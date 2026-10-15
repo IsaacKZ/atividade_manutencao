@@ -1,26 +1,29 @@
-# Estado atual e limites conhecidos
+# Limites conhecidos
 
-O programa foi simplificado para execução local. O login consulta diretamente
-a senha em texto no SQLite. Não há hash, política de senha ou cadastro inicial.
-Essa escolha substitui a proteção de senhas introduzida anteriormente.
+- Senhas ficam em texto simples, conforme a proposta de uso local.
+- Email e telefone são opcionais e não têm validação de formato.
+- O cálculo do CPF não comprova que ele foi emitido.
+- Duas execuções simultâneas podem cadastrar o mesmo CPF.
+- Fim da entrada (`Ctrl+D`) e erros de banco podem encerrar o programa.
 
-As correções do menu, da edição, do CPF e do caminho do banco foram mantidas.
-Edição e exclusão verificam se há clientes e se o ID existe antes das perguntas
-seguintes. A listagem aceita campos nulos e nomes longos, e operações de
-gravação conferem quantas linhas foram afetadas para indicar sucesso.
-O funcionamento está descrito no [README.md](README.md), e o registro das
-alterações está em [CORRECOES.md](CORRECOES.md).
+## Conta da antiga versão com hash
 
-## Limites que continuam fora desta alteração
+Se a senha foi convertida pela versão anterior, redefina-a com o comando abaixo,
+na pasta do projeto. Clientes e outras contas são preservados. Use o mesmo
+`SISTEMA_DB_PATH` do programa, caso tenha configurado outro banco.
 
-- Fim da entrada (`Ctrl+D`) e falhas de banco ainda podem encerrar com traceback.
-- Duas execuções simultâneas podem cadastrar o mesmo CPF, pois não há restrição
-  `UNIQUE` nessa coluna. A validação cobre as operações sequenciais do programa.
-- Email e telefone não possuem validação de formato.
-- O CPF é conferido matematicamente; não há consulta a um cadastro oficial.
-- Usuários com senhas convertidas na versão anterior precisam redefini-las
-  uma vez, seguindo o README. A simplificação não apaga nem redefine contas.
-
-Experimentos anteriores sobre concorrência e falhas de banco estão no histórico
-do Git. Eles não foram repetidos nesta revisão. O resultado da suíte atual está
-em `CORRECOES.md`; ela não afirma resolver os limites pendentes acima.
+```bash
+python3 -B -c '
+from database import conectar
+usuario = input("Usuário: ")
+senha = input("Nova senha: ")
+conexao = conectar()
+cursor = conexao.execute(
+    "UPDATE usuarios SET senha = ? WHERE username = ? AND senha LIKE ?",
+    (senha, usuario, "pbkdf2_sha256$%"),
+)
+conexao.commit()
+print("Contas atualizadas:", cursor.rowcount)
+conexao.close()
+'
+```
