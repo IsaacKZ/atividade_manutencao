@@ -1,39 +1,39 @@
+from contextlib import closing
+import os
+from pathlib import Path
 import sqlite3
 
-DB_PATH = "sistema.db"
+# O mesmo arquivo é usado mesmo ao iniciar o programa em outra pasta.
+DB_PATH = str(
+    Path(os.environ.get("SISTEMA_DB_PATH") or Path(__file__).with_name("sistema.db"))
+    .resolve()
+)
+
 
 def conectar():
+    """Abre o banco configurado, sem depender da pasta atual."""
     return sqlite3.connect(DB_PATH)
 
 
 def inicializar_banco():
-    conexao = conectar()
-    cursor = conexao.cursor()
+    """Cria as tabelas sem apagar dados ou cadastrar uma senha padrão."""
+    with closing(conectar()) as conexao:
+        conexao.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                senha TEXT NOT NULL
+            )
+        """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            senha TEXT NOT NULL
-        )
-    """)
+        conexao.execute("""
+            CREATE TABLE IF NOT EXISTS clientes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT,
+                cpf TEXT,
+                email TEXT,
+                telefone TEXT
+            )
+        """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS clientes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT,
-            cpf TEXT,
-            email TEXT,
-            telefone TEXT
-        )
-    """)
-
-    cursor.execute("SELECT COUNT(*) FROM usuarios")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute(
-            "INSERT INTO usuarios (username, senha) VALUES (?, ?)", # evitar sql injection
-            ("admin", "admin123"),
-        )
-
-    conexao.commit()
-    conexao.close()
+        conexao.commit()
