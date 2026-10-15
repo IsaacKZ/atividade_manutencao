@@ -40,34 +40,19 @@ class MenuTest(unittest.TestCase):
         with database.conectar() as conexao:
             conexao.execute("INSERT INTO usuarios (username, senha) VALUES (?, ?)", (nome, senha))
 
-    def test_primeiro_acesso_cria_conta_escolhida_pelo_usuario(self):
-        saida = self.executar("operador\nSenhaTeste123\nSenhaTeste123\noperador\nSenhaTeste123\n0\n")
-        self.assertIn("Conta criada com sucesso!", saida)
-        self.assertIn("Bem-vindo, operador!", saida)
-        with database.conectar() as conexao:
-            usuarios = conexao.execute("SELECT username, senha FROM usuarios").fetchall()
-        self.assertEqual(len(usuarios), 1)
-        self.assertEqual(usuarios[0][0], "operador")
-        self.assertNotEqual(usuarios[0][1], "SenhaTeste123")
-
-    def test_primeiro_acesso_rejeita_confirmacao_diferente(self):
-        saida = self.executar("operador\nSenhaTeste123\nDiferente123\noperador\nSenhaTeste123\nSenhaTeste123\noperador\nSenhaTeste123\n0\n")
-        self.assertIn("As senhas não conferem.", saida)
-        self.assertEqual(saida.count("Conta criada com sucesso!"), 1)
-
-    def test_primeiro_acesso_rejeita_senha_padrao_antiga(self):
-        saida = self.executar("admin\nadmin123\nadmin123\nadmin\nSenhaNova123\nSenhaNova123\nadmin\nSenhaNova123\n0\n")
-        self.assertIn("Escolha uma senha diferente da antiga senha padrão.", saida)
+    def test_banco_novo_abre_login_sem_cadastro_ou_troca_de_senha(self):
+        saida = self.executar("admin\nadmin123\n0\n")
         self.assertIn("Bem-vindo, admin!", saida)
+        self.assertNotIn("CRIAR PRIMEIRA CONTA", saida)
+        self.assertNotIn("Confirme", saida)
+        self.assertNotIn("Nova senha", saida)
+        self.assertIn("Saindo...", saida)
 
-    def test_conta_padrao_antiga_exige_troca_antes_do_menu(self):
-        self.criar_usuario_antigo("admin", "admin123")
-        saida = self.executar("admin\nadmin123\nSenhaNova123\nSenhaNova123\n0\n")
-        self.assertIn("Senha alterada com sucesso!", saida)
-        self.assertLess(saida.index("Senha alterada com sucesso!"), saida.index("=== MENU ==="))
-        nova_saida = self.executar("admin\nadmin123\nadmin\nSenhaNova123\n0\n")
-        self.assertIn("Usuário ou senha inválidos.", nova_saida)
-        self.assertIn("Bem-vindo, admin!", nova_saida)
+    def test_senha_curta_existente_continua_funcionando(self):
+        self.criar_usuario_antigo("teste", "1")
+        saida = self.executar("teste\n1\n0\n")
+        self.assertIn("Bem-vindo, teste!", saida)
+        self.assertNotIn("Nova senha", saida)
 
     def test_edicao_nao_reutiliza_id_de_exclusao_cancelada(self):
         self.criar_usuario_antigo()

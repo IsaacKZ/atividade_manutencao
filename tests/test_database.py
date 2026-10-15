@@ -19,12 +19,12 @@ class BancoTest(unittest.TestCase):
         ajuste.start()
         self.addCleanup(ajuste.stop)
 
-    def test_inicializacao_nao_cria_credencial_padrao(self):
+    def test_inicializacao_cria_login_padrao_em_banco_novo(self):
         database.inicializar_banco()
         with closing(database.conectar()) as conexao:
-            usuarios = conexao.execute("SELECT * FROM usuarios").fetchall()
+            usuarios = conexao.execute("SELECT username, senha FROM usuarios").fetchall()
             clientes = conexao.execute("SELECT * FROM clientes").fetchall()
-        self.assertEqual(usuarios, [])
+        self.assertEqual(usuarios, [("admin", "admin123")])
         self.assertEqual(clientes, [])
 
     def test_inicializacao_repetida_preserva_usuarios_e_clientes(self):

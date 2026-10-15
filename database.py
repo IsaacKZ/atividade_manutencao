@@ -1,12 +1,10 @@
-from contextlib import closing
 import os
-from pathlib import Path
 import sqlite3
 
-# O mesmo arquivo é usado mesmo ao iniciar o programa em outra pasta.
-DB_PATH = str(
-    Path(os.environ.get("SISTEMA_DB_PATH") or Path(__file__).with_name("sistema.db"))
-    .resolve()
+# O banco padrão fica na pasta do projeto, mesmo ao iniciar de outra pasta.
+PASTA_PROJETO = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.abspath(
+    os.environ.get("SISTEMA_DB_PATH") or os.path.join(PASTA_PROJETO, "sistema.db")
 )
 
 
@@ -16,8 +14,9 @@ def conectar():
 
 
 def inicializar_banco():
-    """Cria as tabelas sem apagar dados ou cadastrar uma senha padrão."""
-    with closing(conectar()) as conexao:
+    """Cria as tabelas e o login inicial, sem apagar os dados existentes."""
+    conexao = conectar()
+    try:
         conexao.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,4 +35,12 @@ def inicializar_banco():
             )
         """)
 
+        cursor = conexao.execute("SELECT COUNT(*) FROM usuarios")
+        if cursor.fetchone()[0] == 0:
+            conexao.execute(
+                "INSERT INTO usuarios (username, senha) VALUES (?, ?)",
+                ("admin", "admin123"),
+            )
         conexao.commit()
+    finally:
+        conexao.close()

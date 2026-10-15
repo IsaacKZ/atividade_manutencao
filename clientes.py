@@ -1,5 +1,3 @@
-from contextlib import closing
-
 from database import conectar
 
 
@@ -34,7 +32,8 @@ def validar_cpf(cpf):
 
 
 def cpf_ja_cadastrado(cpf, id_cliente=None):
-    with closing(conectar()) as conexao:
+    conexao = conectar()
+    try:
         if id_cliente is None:
             resultado = conexao.execute(
                 "SELECT 1 FROM clientes WHERE cpf = ?", (cpf,)
@@ -46,14 +45,19 @@ def cpf_ja_cadastrado(cpf, id_cliente=None):
                 (cpf, id_cliente),
             )
         return resultado.fetchone() is not None
+    finally:
+        conexao.close()
 
 
 def cliente_existe(id_cliente):
-    with closing(conectar()) as conexao:
+    conexao = conectar()
+    try:
         resultado = conexao.execute(
             "SELECT 1 FROM clientes WHERE id = ?", (id_cliente,)
         )
         return resultado.fetchone() is not None
+    finally:
+        conexao.close()
 
 
 def validar_dados_cliente(nome, cpf, id_cliente=None):
@@ -69,19 +73,25 @@ def validar_dados_cliente(nome, cpf, id_cliente=None):
 def cadastrar_cliente(nome, cpf, email, telefone):
     validar_dados_cliente(nome, cpf)
 
-    with closing(conectar()) as conexao:
+    conexao = conectar()
+    try:
         conexao.execute(
             "INSERT INTO clientes (nome, cpf, email, telefone) VALUES (?, ?, ?, ?)",
             (nome, cpf, email, telefone),
         )
         conexao.commit()
+    finally:
+        conexao.close()
 
 
 def listar_clientes():
-    with closing(conectar()) as conexao:
+    conexao = conectar()
+    try:
         return conexao.execute(
             "SELECT id, nome, cpf, email, telefone FROM clientes"
         ).fetchall()
+    finally:
+        conexao.close()
 
 
 def editar_cliente(id_cliente, nome, cpf, email, telefone):
@@ -89,12 +99,16 @@ def editar_cliente(id_cliente, nome, cpf, email, telefone):
         return False
     validar_dados_cliente(nome, cpf, id_cliente)
 
-    with closing(conectar()) as conexao:
+    conexao = conectar()
+    try:
         conexao.execute(
             "UPDATE clientes SET nome=?, cpf=?, email=?, telefone=? WHERE id=?",
             (nome, cpf, email, telefone, id_cliente),
         )
         conexao.commit()
+    finally:
+        conexao.close()
+
     return True
 
 
@@ -102,7 +116,11 @@ def excluir_cliente(id_cliente):
     if not cliente_existe(id_cliente):
         return False
 
-    with closing(conectar()) as conexao:
+    conexao = conectar()
+    try:
         conexao.execute("DELETE FROM clientes WHERE id=?", (id_cliente,))
         conexao.commit()
+    finally:
+        conexao.close()
+
     return True

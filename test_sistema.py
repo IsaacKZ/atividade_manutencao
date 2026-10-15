@@ -19,7 +19,7 @@ class SistemaTest(unittest.TestCase):
         ajuste.start()
         self.addCleanup(ajuste.stop)
         database.inicializar_banco()
-        # Conta antiga em banco temporário: também exercita a migração no login.
+        # Conta de teste em banco temporário.
         with database.conectar() as conexao:
             conexao.execute(
                 "INSERT INTO usuarios (username, senha) VALUES (?, ?)",
