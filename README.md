@@ -62,6 +62,8 @@ digitação no terminal; use o programa em um ambiente de confiança.
   como `00000000000` e CPFs com verificadores incorretos são rejeitados.
 - Cadastro e edição aplicam as mesmas regras. Um CPF já usado por outro
   cliente é rejeitado; editar um cliente mantendo o próprio CPF é permitido.
+- Sem clientes cadastrados, a opção de edição informa isso e volta ao menu.
+  Se houver clientes, o ID é conferido antes de solicitar os novos dados.
 - Email e telefone continuam opcionais e sem validação de formato.
 
 Os dígitos verificadores confirmam somente a estrutura matemática do CPF.
@@ -116,14 +118,16 @@ SISTEMA_DB_PATH="$pasta_teste/sistema.db" python3 -B /workspace/atividade_manute
    diferente de `admin123`, e confirme-a. Faça login quando solicitado.
 2. Escolha `2`. A lista vazia deve aparecer uma vez, e o programa deve voltar
    ao menu sem pedir dados de edição.
-3. Escolha `3` diretamente, antes de cadastrar alguém. Informe ID `999`, nome
-   `Pessoa Teste A`, CPF `52998224725`, email `a@example.invalid` e telefone
-   `123`. Deve aparecer a mensagem de cliente inexistente, sem encerrar o programa.
+3. Escolha `3` diretamente, antes de cadastrar alguém. Deve aparecer
+   `Nenhum cliente cadastrado.`, e o programa deve voltar ao menu sem pedir
+   ID, nome, CPF, email ou telefone.
 4. Escolha `1` e cadastre `Pessoa Teste A`, CPF `52998224725`, email
    `a@example.invalid` e telefone `123`. Cadastre também `Pessoa Teste B`, CPF
    `11144477735`, email `b@example.invalid` e telefone `456`.
 5. Escolha `2`, anote os IDs e confira que cada cliente aparece uma vez. A
-   listagem não deve iniciar uma edição.
+   listagem não deve iniciar uma edição. Escolha `3` e informe ID `999`:
+   deve aparecer a mensagem de cliente inexistente e retornar ao menu sem
+   pedir os novos dados.
 6. Escolha `3`, informe o ID de A, nome `Pessoa Teste A Editada`, o mesmo CPF
    `52998224725`, email `a2@example.invalid` e telefone `789`. Deve haver sucesso.
    Escolha `2` e confira que somente A mudou e B mantém seus dados.

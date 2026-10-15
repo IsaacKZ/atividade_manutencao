@@ -18,8 +18,10 @@ As observações históricas não são uma nova execução dos mesmos experiment
   `admin`/`admin123` precisa ser substituída antes de acessar o menu.
 - **Menu e edição:** as opções têm dados próprios, a lista aparece uma vez,
   editar diretamente funciona e erros de validação não encerram o menu.
+  Sem clientes, a edição volta imediatamente ao menu; com ID inexistente,
+  mostra o erro antes de solicitar novos dados.
 
-A suíte atual foi executada com `python3 -B -m unittest discover -v`: 50 testes
+A suíte atual foi executada com `python3 -B -m unittest discover -v`: 52 testes
 aprovados. O banco original e os arquivos de cache rastreados permaneceram sem
 alterações. Os detalhes antes/depois estão em [CORRECOES.md](CORRECOES.md);
 o roteiro manual está em [README.md](README.md).
@@ -104,9 +106,9 @@ afetadas pela própria operação.
   antes da comparação de duplicidade.
 - **Email e telefone:** continuam aceitando entradas vazias ou sem formato.
   É preciso definir as regras desses campos antes de restringi-los.
-- **Edição:** o programa ainda solicita todos os dados antes de verificar o ID.
-  Conferir o ID primeiro e permitir manter campos reduziria trabalho, mas
-  mudaria a interação atual.
+- **Edição:** o ID agora é conferido antes de solicitar os novos dados.
+  Permitir manter campos existentes sem redigitá-los ainda seria uma melhoria
+  na interação atual.
 - **Repositório:** o banco histórico de demonstração e arquivos gerados já
   rastreados precisam de tratamento próprio se forem removidos do versionamento.
   Um `.gitignore` sozinho não apaga arquivos ou dados já presentes no histórico.

@@ -96,8 +96,10 @@ class SistemaTest(unittest.TestCase):
     def test_ids_inexistentes(self):
         self.assertFalse(editar_cliente("999", "Ana", "52998224725", "", ""))
         self.assertFalse(excluir_cliente("999"))
-        saida = self.executar_menu("3\n999\nAna\n52998224725\nemail\n123\n4\n999\ns\n0\n")
+        self.cadastrar()
+        saida = self.executar_menu("3\n999\n4\n999\ns\n0\n")
         self.assertEqual(saida.count("nenhum cliente encontrado"), 2)
+        self.assertNotIn("Novo nome:", saida)
 
     def test_exclusao_cancelada_e_confirmada(self):
         cliente = self.cadastrar()

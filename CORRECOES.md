@@ -34,6 +34,23 @@ comparação apropriada da biblioteca padrão evita criar um algoritmo de
 segurança próprio. Essa parte serve para não armazenar novas senhas como texto
 legível; a senha ainda aparece enquanto é digitada no terminal.
 
+## Correção adicional: edição sem clientes ou com ID inexistente
+
+O menu ainda solicitava ID e novos dados mesmo depois de informar que não
+havia clientes. Também solicitava todos os dados antes de rejeitar um ID
+inexistente. Nenhuma edição era gravada nesses casos, mas as perguntas eram
+desnecessárias e davam a impressão de que a operação estava disponível.
+
+Agora `exibir_clientes()` retorna `False` quando a lista está vazia e `True`
+quando há registros. `editar_pelo_menu()` usa esse resultado para voltar
+imediatamente ao menu se não houver clientes. Havendo registros, consulta
+`cliente_existe()` antes de chamar `ler_dados_cliente()`. A correção usa
+apenas condições `if` e retornos antecipados, sem bibliotecas adicionais.
+
+Dois novos testes executam o programa real: edição em banco sem clientes e
+edição com ID inexistente em banco com um cliente. Eles conferem que não há
+perguntas indevidas, que o menu reaparece e que os clientes ficam intactos.
+
 ## Preservação dos dados existentes
 
 As tabelas e os clientes antigos são preservados. A inicialização não limpa o
@@ -67,7 +84,7 @@ python3 -B -m unittest discover -v
 A suíte reúne `test_sistema.py` e os testes em `tests/`. Ela verifica as
 regressões de menu, validação compartilhada, CPFs, autenticação, migração e
 localização do banco usando arquivos SQLite temporários. Os testes não
-precisam modificar o banco original. Na verificação desta versão, os 50 testes
+precisam modificar o banco original. Na verificação desta versão, os 52 testes
 foram aprovados. O banco original e os caches rastreados ficaram sem alterações.
 
 Na etapa anterior da manutenção, a documentação registrou a comparação de

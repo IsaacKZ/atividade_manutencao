@@ -89,6 +89,28 @@ class MenuTest(unittest.TestCase):
         self.assertIn("Usuário ou senha inválidos.", saida)
         self.assertIn("Bem-vindo, operador!", saida)
 
+    def test_edicao_sem_clientes_volta_ao_menu_sem_perguntas(self):
+        self.criar_usuario_antigo()
+        saida = self.executar("operador\nSenhaTeste123\n3\n0\n")
+        self.assertIn("Nenhum cliente cadastrado.", saida)
+        self.assertNotIn("ID do cliente a editar:", saida)
+        self.assertNotIn("Novo nome:", saida)
+        self.assertEqual(saida.count("=== MENU ==="), 2)
+        self.assertEqual(clientes.listar_clientes(), [])
+
+    def test_edicao_com_id_inexistente_nao_pede_novos_dados(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
+        original = clientes.listar_clientes()
+        saida = self.executar("operador\nSenhaTeste123\n3\n999\n0\n")
+        self.assertIn("nenhum cliente encontrado com o ID 999", saida)
+        self.assertNotIn("Novo nome:", saida)
+        self.assertNotIn("Novo CPF:", saida)
+        self.assertNotIn("Novo email:", saida)
+        self.assertNotIn("Novo telefone:", saida)
+        self.assertEqual(saida.count("=== MENU ==="), 2)
+        self.assertEqual(clientes.listar_clientes(), original)
+
 
 if __name__ == "__main__":
     unittest.main()
