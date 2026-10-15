@@ -4,7 +4,33 @@ from database import conectar
 
 
 def validar_cpf(cpf):
-    return cpf.isdigit() and len(cpf) == 11
+    """Confere os 11 dígitos e calcula os dois verificadores do CPF."""
+    if len(cpf) != 11:
+        return False
+
+    # isdigit() também aceita símbolos como ²; aqui só aceitamos de 0 a 9.
+    for caractere in cpf:
+        if caractere < "0" or caractere > "9":
+            return False
+
+    if cpf == cpf[0] * 11:
+        return False
+
+    # O primeiro verificador usa os 9 primeiros dígitos; o segundo usa 10.
+    for quantidade in (9, 10):
+        soma = 0
+        peso = quantidade + 1
+        for posicao in range(quantidade):
+            soma = soma + int(cpf[posicao]) * peso
+            peso = peso - 1
+
+        verificador = 11 - (soma % 11)
+        if verificador >= 10:
+            verificador = 0
+        if int(cpf[quantidade]) != verificador:
+            return False
+
+    return True
 
 
 def cpf_ja_cadastrado(cpf, id_cliente=None):
@@ -31,10 +57,11 @@ def cliente_existe(id_cliente):
 
 
 def validar_dados_cliente(nome, cpf, id_cliente=None):
+    """Aplica as mesmas regras no cadastro e na edição, sem gravar dados."""
     if not nome.strip():
         raise ValueError("o nome não pode ficar vazio.")
     if not validar_cpf(cpf):
-        raise ValueError("CPF inválido. Informe 11 dígitos numéricos.")
+        raise ValueError("CPF inválido. Informe 11 dígitos, sem pontuação e com verificadores corretos.")
     if cpf_ja_cadastrado(cpf, id_cliente):
         raise ValueError("já existe um cliente cadastrado com esse CPF.")
 

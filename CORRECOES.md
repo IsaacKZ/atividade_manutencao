@@ -1,77 +1,82 @@
 # Correções de funcionamento
 
-## Bugs corrigidos
+Este documento reúne as sete correções solicitadas e as orientações para
+verificá-las. O [README.md](README.md) contém os comandos de execução e um
+roteiro manual com banco descartável.
 
-- **Listagem iniciava uma edição:** a opção 2 exibia a lista duas vezes e
-  solicitava os dados de edição. A coleta desses dados foi movida para a opção 3.
-- **Edição encerrava o programa:** selecionar a opção 3 diretamente causava
-  `UnboundLocalError`, pois os dados só eram definidos na opção 2. Agora a
-  própria opção de edição solicita o ID e os novos dados.
-- **Edição burlava a validação do cadastro:** era possível salvar nome vazio,
-  CPF sem os 11 dígitos exigidos ou CPF pertencente a outro cliente. A edição
-  aplica as mesmas regras existentes no cadastro, permitindo manter o CPF do
-  próprio cliente. Nenhuma validação adicional de CPF foi introduzida.
-- **Tratamento de erro na edição:** o menu apresenta a mensagem de validação
-  e continua funcionando, como já ocorria no cadastro. Dados rejeitados não
-  são gravados.
+## O que mudou
 
-Não foram adicionadas funcionalidades nem alterados o esquema ou os dados do
-banco existente. As correções iniciais estão em `main.py` e `clientes.py`.
+| Problema | Antes | Agora | Arquivos |
+| --- | --- | --- | --- |
+| 1. Edição encerrava o programa | Escolher `3` diretamente podia causar `UnboundLocalError`: os dados só eram lidos na opção `2`. | A própria edição solicita o ID e os novos dados antes de usá-los. | `main.py` |
+| 2. Listagem iniciava edição | A opção `2` mostrava a lista duas vezes e solicitava dados de edição. | A lista aparece uma vez e a opção retorna ao menu. | `main.py` |
+| 3. Edição podia usar dados de outra ação | Variáveis compartilhadas entre opções podiam reaproveitar o ID e os dados anteriores, alterando o cliente errado. | Cada ação tem sua função e a edição usa os valores informados naquela chamada. | `main.py` |
+| 4. Edição burlava a validação | Era possível gravar nome vazio, CPF inválido ou CPF de outro cliente. | Cadastro e edição compartilham a validação; o cliente pode manter o próprio CPF, mas não usar o de outro. O menu mostra o erro e continua. | `clientes.py`, `main.py` |
+| 5. CPF sem dígitos verificadores | Comprimento e `isdigit()` aceitavam sequências repetidas, caracteres numéricos não ASCII e CPFs matematicamente inválidos. | São exigidos 11 dígitos ASCII, rejeição de sequência uniforme e cálculo dos dois verificadores. | `clientes.py` |
+| 6. Senhas em texto puro e conta padrão | Senhas eram comparadas em texto puro e um banco novo recebia automaticamente uma conta com credenciais conhecidas. | O primeiro usuário escolhe sua senha; novas senhas recebem PBKDF2-SHA256 e salt aleatório. Senhas antigas são migradas após autenticação correta. A antiga senha padrão precisa ser substituída antes do menu. | `auth.py`, `database.py`, `main.py` |
+| 7. Banco dependia da pasta atual | `sistema.db` relativo podia abrir bancos diferentes conforme a pasta de execução. | O padrão aponta para o banco ao lado de `database.py`; `SISTEMA_DB_PATH` permite escolher outro arquivo. Prefira um caminho absoluto no override. | `database.py` |
 
-## Simplificação posterior
+## Código simples e reaproveitamento
 
-- `main.py`: cada ação do menu tem uma função curta. `ler_dados_cliente()`
-  reúne as perguntas comuns a cadastro e edição, e `iniciar()` apresenta
-  o ponto de entrada do programa.
-- `clientes.py`: `validar_dados_cliente()` reúne as regras que cadastro e
-  edição já aplicavam. A consulta de CPF distingue cadastro e edição com um
-  `if`, deixando explícito que o cliente pode manter o próprio CPF.
-- `auth.py`, `clientes.py` e `database.py`: as consultas usam
-  `conexao.execute()` diretamente, sem criar variáveis de cursor separadas.
-  `closing()` fecha as conexões mesmo quando ocorre uma exceção; as gravações
-  mantêm `commit()` explícito.
-- Comentários redundantes e anotações antigas de erros foram removidos.
-  `README.md` explica como executar e acompanhar o fluxo do código.
+As primeiras correções de menu e validação já estavam acompanhadas de uma
+simplificação do código. Ela foi preservada:
 
-A simplificação preserva opções, perguntas, mensagens, regras de validação,
-assinaturas das funções existentes e esquema do banco. Não adiciona bibliotecas
-externas. Os problemas funcionais restantes continuam descritos em `REVISAO.md`.
+- Cada ação do menu tem uma função curta. `ler_dados_cliente()` reúne as
+  perguntas de cadastro e edição, e `iniciar()` é o ponto de entrada.
+- `validar_dados_cliente()` reúne as regras comuns. A consulta de CPF recebe
+  o ID na edição para desconsiderar o próprio cliente.
+- A verificação dos dígitos do CPF usa `for`, operações aritméticas e `if`.
+- As consultas usam `conexao.execute()` com parâmetros; `closing()` garante
+  o fechamento das conexões e as gravações mantêm `commit()` explícito.
 
-## Executar no ambiente de desenvolvimento
+Não há bibliotecas externas. Para senhas, o uso de `hashlib`, salt aleatório e
+comparação apropriada da biblioteca padrão evita criar um algoritmo de
+segurança próprio. Essa parte serve para não armazenar novas senhas como texto
+legível; a senha ainda aparece enquanto é digitada no terminal.
 
-O programa usa somente a biblioteca padrão do Python (incluindo SQLite).
-Validado com Python 3.12.14; não é necessário instalar pacotes ou iniciar
-serviços externos.
+## Preservação dos dados existentes
 
-Execute a partir da pasta do repositório, pois `sistema.db` é um caminho relativo:
+As tabelas e os clientes antigos são preservados. A inicialização não limpa o
+banco, não troca todos os usuários nem reescreve CPFs inválidos. As novas regras
+de cliente são aplicadas nas operações de cadastro e edição.
 
-```bash
-cd /workspace/atividade_manutencao
-python3 -B main.py
-```
+Uma senha antiga em texto puro só é convertida após a senha correta ser
+informada. A migração preserva a senha escolhida e os demais dados. A conta
+legada `admin` com senha `admin123` exige uma senha nova antes de entrar no
+menu; manter uma senha padrão pública não seria corrigido apenas pelo hash.
+Senhas criadas ou trocadas precisam ter pelo menos 8 caracteres e ser
+diferentes de `admin123`.
 
-Em um banco recém-inicializado, o usuário padrão é `admin` e a senha é
-`admin123`. Um banco existente preserva seus usuários.
+Essas mudanças não apagam cópias de senhas em backups ou no histórico do Git.
+O banco versionado contém dados históricos de demonstração: não acrescente
+dados pessoais reais a ele para enviar ao repositório.
+
+O cálculo do CPF confere os verificadores, mas não consulta um cadastro oficial
+nem demonstra que o documento foi emitido. Email e telefone continuam sem
+validação de formato. Outros problemas conhecidos estão em
+[REVISAO.md](REVISAO.md).
 
 ## Verificação
 
+Execute a partir da pasta do repositório:
+
 ```bash
-cd /workspace/atividade_manutencao
 python3 -B -m unittest discover -v
 ```
 
-Foram executados 12 testes em `test_sistema.py`, todos aprovados após as
-correções. Antes delas, 8 falhavam. A suíte verifica login, inicialização
-repetida, cadastro, listagem, edição válida e inválida, IDs inexistentes e
-exclusão cancelada ou confirmada. Os testes do menu executam o programa real
-em subprocessos. Cada teste usa um banco SQLite temporário, sem modificar o
-`sistema.db` do repositório.
+A suíte reúne `test_sistema.py` e os testes em `tests/`. Ela verifica as
+regressões de menu, validação compartilhada, CPFs, autenticação, migração e
+localização do banco usando arquivos SQLite temporários. Os testes não
+precisam modificar o banco original. Na verificação desta versão, os 50 testes
+foram aprovados. O banco original e os caches rastreados ficaram sem alterações.
 
-Após a simplificação, os 12 testes continuam aprovados. Também foram comparados
-9 cenários do programa completo antes e depois da refatoração: login inválido
-seguido de válido, opção inválida e lista vazia, cadastro e listagem, cadastros
-inválidos, cadastro duplicado, edição mantendo CPF, edições inválidas e com CPF
-duplicado, IDs inexistentes e exclusão cancelada ou confirmada. As saídas do
-terminal, os clientes gravados e as colunas e índices das tabelas foram iguais.
-A comparação usou bancos temporários e um snapshot local do código anterior;
-os cenários adicionais não foram incorporados como novos testes na suíte.
+Na etapa anterior da manutenção, a documentação registrou a comparação de
+nove cenários antes e depois da simplificação: login inválido seguido de
+válido, opção inválida e lista vazia, cadastro e listagem, cadastros inválidos,
+CPF duplicado, edição mantendo CPF, edições inválidas e duplicadas, IDs
+inexistentes e exclusão cancelada ou confirmada. Essa comparação pertencia à
+refatoração anterior; ela não substitui executar a suíte da versão atual.
+
+Para conferir interativamente as correções, siga a seção de teste manual do
+[README.md](README.md), usando os CPFs de teste `52998224725` e `11144477735` e
+um banco descartável fora do repositório.

@@ -1,14 +1,22 @@
 from contextlib import closing
+import os
+from pathlib import Path
 import sqlite3
 
-DB_PATH = "sistema.db"
+# O mesmo arquivo é usado mesmo ao iniciar o programa em outra pasta.
+DB_PATH = str(
+    Path(os.environ.get("SISTEMA_DB_PATH") or Path(__file__).with_name("sistema.db"))
+    .resolve()
+)
 
 
 def conectar():
+    """Abre o banco configurado, sem depender da pasta atual."""
     return sqlite3.connect(DB_PATH)
 
 
 def inicializar_banco():
+    """Cria as tabelas sem apagar dados ou cadastrar uma senha padrão."""
     with closing(conectar()) as conexao:
         conexao.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -27,12 +35,5 @@ def inicializar_banco():
                 telefone TEXT
             )
         """)
-
-        quantidade_usuarios = conexao.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-        if quantidade_usuarios == 0:
-            conexao.execute(
-                "INSERT INTO usuarios (username, senha) VALUES (?, ?)",
-                ("admin", "admin123"),
-            )
 
         conexao.commit()

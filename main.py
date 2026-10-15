@@ -1,4 +1,4 @@
-from auth import login
+from auth import cadastrar_usuario, existe_usuario, login, trocar_senha
 from clientes import (
     cadastrar_cliente,
     editar_cliente,
@@ -15,14 +15,54 @@ LARGURA_TELEFONE = 15
 
 
 def tela_login():
+    """Autentica e exige a substituição da antiga senha padrão."""
     print("=== LOGIN ===")
     username = input("Usuário: ")
     senha = input("Senha: ")
     if login(username, senha):
+        if username.strip() == "admin" and senha == "admin123":
+            if not trocar_senha_padrao(username, senha):
+                return False
         print(f"\nBem-vindo, {username}!\n")
         return True
     print("\nUsuário ou senha inválidos.\n")
     return False
+
+
+def criar_primeira_conta():
+    """Bancos novos recebem uma conta escolhida pelo próprio usuário."""
+    while not existe_usuario():
+        print("=== CRIAR PRIMEIRA CONTA ===")
+        username = input("Usuário: ")
+        senha = input("Senha (mínimo de 8 caracteres): ")
+        confirmacao = input("Confirme a senha: ")
+        if senha != confirmacao:
+            print("As senhas não conferem.")
+            continue
+        try:
+            cadastrar_usuario(username, senha)
+            print("Conta criada com sucesso!")
+        except ValueError as erro:
+            print(f"Erro ao criar conta: {erro}")
+
+
+def trocar_senha_padrao(username, senha_atual):
+    """Impede entrar no menu com a senha conhecida das versões antigas."""
+    print("A antiga senha padrão precisa ser substituída antes de continuar.")
+    while True:
+        nova_senha = input("Nova senha (mínimo de 8 caracteres): ")
+        confirmacao = input("Confirme a nova senha: ")
+        if nova_senha != confirmacao:
+            print("As senhas não conferem.")
+            continue
+        try:
+            if trocar_senha(username, senha_atual, nova_senha):
+                print("Senha alterada com sucesso!")
+                return True
+            print("Não foi possível confirmar a senha atual.")
+            return False
+        except ValueError as erro:
+            print(f"Erro ao alterar senha: {erro}")
 
 
 def formatar_linha(id_cliente, nome, cpf, email, telefone):
@@ -36,6 +76,7 @@ def formatar_linha(id_cliente, nome, cpf, email, telefone):
 
 
 def exibir_clientes():
+    """Lista os clientes uma vez, sem solicitar dados de edição."""
     clientes = listar_clientes()
     if not clientes:
         print("Nenhum cliente cadastrado.")
@@ -64,6 +105,7 @@ def cadastrar_pelo_menu():
 
 
 def editar_pelo_menu():
+    """Lê ID e dados nesta ação; não reutiliza valores de outras opções."""
     exibir_clientes()
     id_cliente = input("ID do cliente a editar: ")
     nome, cpf, email, telefone = ler_dados_cliente(edicao=True)
@@ -118,7 +160,9 @@ def menu_principal():
 
 
 def iniciar():
+    """Prepara as tabelas e inicia o fluxo de conta, login e menu."""
     inicializar_banco()
+    criar_primeira_conta()
     while not tela_login():
         pass
     menu_principal()
