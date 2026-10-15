@@ -1,6 +1,7 @@
 from auth import cadastrar_usuario, existe_usuario, login, trocar_senha
 from clientes import (
     cadastrar_cliente,
+    cliente_existe,
     editar_cliente,
     excluir_cliente,
     listar_clientes,
@@ -76,15 +77,16 @@ def formatar_linha(id_cliente, nome, cpf, email, telefone):
 
 
 def exibir_clientes():
-    """Lista os clientes uma vez, sem solicitar dados de edição."""
+    """Lista uma vez e informa se há clientes para continuar uma ação."""
     clientes = listar_clientes()
     if not clientes:
         print("Nenhum cliente cadastrado.")
-        return
+        return False
 
     print(formatar_linha("ID", "Nome", "CPF", "Email", "Telefone"))
     for id_cliente, nome, cpf, email, telefone in clientes:
         print(formatar_linha(id_cliente, nome, cpf, email, telefone))
+    return True
 
 
 def ler_dados_cliente(edicao=False):
@@ -105,9 +107,13 @@ def cadastrar_pelo_menu():
 
 
 def editar_pelo_menu():
-    """Lê ID e dados nesta ação; não reutiliza valores de outras opções."""
-    exibir_clientes()
+    """Só solicita novos dados se houver clientes e o ID informado existir."""
+    if not exibir_clientes():
+        return
     id_cliente = input("ID do cliente a editar: ")
+    if not cliente_existe(id_cliente):
+        print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
+        return
     nome, cpf, email, telefone = ler_dados_cliente(edicao=True)
     try:
         if editar_cliente(id_cliente, nome, cpf, email, telefone):
