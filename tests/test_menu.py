@@ -79,7 +79,7 @@ class MenuTest(unittest.TestCase):
         saida = self.executar("operador\nSenhaTeste123\n3\n0\n")
         self.assertIn("Nenhum cliente cadastrado.", saida)
         self.assertNotIn("ID do cliente a editar:", saida)
-        self.assertNotIn("Novo nome:", saida)
+        self.assertNotIn("Novo nome", saida)
         self.assertEqual(saida.count("=== MENU ==="), 2)
         self.assertEqual(clientes.listar_clientes(), [])
 
@@ -89,10 +89,10 @@ class MenuTest(unittest.TestCase):
         original = clientes.listar_clientes()
         saida = self.executar("operador\nSenhaTeste123\n3\n999\n0\n")
         self.assertIn("nenhum cliente encontrado com o ID 999", saida)
-        self.assertNotIn("Novo nome:", saida)
-        self.assertNotIn("Novo CPF:", saida)
-        self.assertNotIn("Novo email:", saida)
-        self.assertNotIn("Novo telefone:", saida)
+        self.assertNotIn("Novo nome", saida)
+        self.assertNotIn("Novo CPF", saida)
+        self.assertNotIn("Novo email", saida)
+        self.assertNotIn("Novo telefone", saida)
         self.assertEqual(saida.count("=== MENU ==="), 2)
         self.assertEqual(clientes.listar_clientes(), original)
 
@@ -126,6 +126,77 @@ class MenuTest(unittest.TestCase):
         saida = self.executar("operador\nSenhaTeste123\n2\n0\n")
         self.assertIn("ID | Nome | CPF | Email | Telefone", saida)
         self.assertIn(nome + " | 52998224725 |  | ", saida)
+        self.assertEqual(clientes.listar_clientes(), original)
+
+    def test_enter_na_edicao_mantem_todos_os_campos(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
+        original = clientes.listar_clientes()
+        saida = self.executar("operador\nSenhaTeste123\n3\n1\n\n\n\n\n0\n")
+        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertIn("ana@example.com", saida)
+        self.assertEqual(clientes.listar_clientes(), original)
+
+    def test_edicao_altera_nome_e_preserva_outros_campos_com_enter(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
+        saida = self.executar("operador\nSenhaTeste123\n3\n1\nAna Silva\n\n\n\n0\n")
+        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertEqual(clientes.listar_clientes()[0][1:], ("Ana Silva", "52998224725", "ana@example.com", "111"))
+
+    def test_hifen_apaga_contatos_explicitamente_na_edicao(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
+        saida = self.executar("operador\nSenhaTeste123\n3\n1\n\n\n-\n-\n0\n")
+        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertEqual(clientes.listar_clientes()[0][1:], ("Ana", "52998224725", "", ""))
+
+    def test_nome_vazio_e_corrigido_antes_de_pedir_cpf(self):
+        self.criar_usuario_antigo()
+        saida = self.executar("operador\nSenhaTeste123\n1\n\n   \nAna\n52998224725\nemail\n111\n0\n")
+        self.assertEqual(saida.count("o nome não pode ficar vazio."), 2)
+        self.assertLess(saida.index("o nome não pode ficar vazio."), saida.index("CPF ("))
+        self.assertEqual(clientes.listar_clientes()[0][1], "Ana")
+
+    def test_cpf_invalido_e_corrigido_antes_de_email_sem_repetir_nome(self):
+        self.criar_usuario_antigo()
+        saida = self.executar("operador\nSenhaTeste123\n1\nAna\n123\n529.982.247-25\nemail\n111\n0\n")
+        self.assertIn("Cliente cadastrado com sucesso!", saida)
+        self.assertLess(saida.index("CPF inválido."), saida.index("Email:"))
+        self.assertEqual(saida.count("Nome:"), 1)
+        self.assertEqual(clientes.listar_clientes()[0][1:3], ("Ana", "52998224725"))
+
+    def test_cpf_duplicado_pede_outro_cpf_sem_descartar_nome(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "", "")
+        saida = self.executar("operador\nSenhaTeste123\n1\nBia\n529.982.247-25\n11144477735\nemail\n222\n0\n")
+        self.assertIn("já existe um cliente cadastrado com esse CPF.", saida)
+        self.assertEqual(saida.count("Nome:"), 1)
+        self.assertEqual(clientes.listar_clientes()[1][1:3], ("Bia", "11144477735"))
+
+    def test_espacos_em_usuario_menu_e_cpf_sao_aceitos_sem_mudar_senha(self):
+        self.criar_usuario_antigo("operador", " senha ")
+        saida = self.executar(" operador \n senha \n 1 \nAna\n 529.982.247-25 \nemail\n111\n 2 \n 0 \n")
+        self.assertIn("Bem-vindo, operador!", saida)
+        self.assertNotIn("Opção inválida.", saida)
+        self.assertEqual(clientes.listar_clientes()[0][2], "52998224725")
+
+    def test_cpf_duplicado_na_edicao_pode_ser_corrigido_com_enter(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
+        clientes.cadastrar_cliente("Bia", "11144477735", "bia@example.com", "222")
+        original = clientes.listar_clientes()
+        saida = self.executar("operador\nSenhaTeste123\n3\n1\n\n111.444.777-35\n\n\n\n0\n")
+        self.assertIn("já existe um cliente cadastrado com esse CPF.", saida)
+        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertEqual(clientes.listar_clientes(), original)
+
+    def test_confirmacao_por_extenso_continua_cancelando_conforme_escopo(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "", "")
+        original = clientes.listar_clientes()
+        saida = self.executar("operador\nSenhaTeste123\n4\n1\nsim\n0\n")
+        self.assertIn("Exclusão cancelada.", saida)
         self.assertEqual(clientes.listar_clientes(), original)
 
 

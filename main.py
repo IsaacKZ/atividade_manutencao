@@ -1,17 +1,20 @@
 from auth import login
 from clientes import (
+    buscar_cliente,
     cadastrar_cliente,
     cliente_existe,
     editar_cliente,
     excluir_cliente,
     listar_clientes,
+    normalizar_cpf,
+    validar_dados_cliente,
 )
 from database import inicializar_banco
 
 def tela_login():
     """Pede o usuário e a senha para entrar no menu."""
     print("=== LOGIN ===")
-    username = input("Usuário: ")
+    username = input("Usuário: ").strip()
     senha = input("Senha: ")
     if login(username, senha):
         print(f"\nBem-vindo, {username}!\n")
@@ -33,11 +36,45 @@ def exibir_clientes():
     return True
 
 
-def ler_dados_cliente(edicao=False):
-    nome = input("Novo nome: " if edicao else "Nome: ")
-    cpf = input("Novo CPF: " if edicao else "CPF: ")
-    email = input("Novo email: " if edicao else "Email: ")
-    telefone = input("Novo telefone: " if edicao else "Telefone: ")
+def ler_dados_cliente(cliente=None):
+    """Valida antes de avançar e permite manter os dados atuais na edição."""
+    id_cliente = None
+    nome_atual, cpf_atual, email_atual, telefone_atual = "", "", "", ""
+    if cliente is not None:
+        id_cliente, nome_atual, cpf_atual, email_atual, telefone_atual = cliente
+        print("Enter mantém o valor atual. Digite - para apagar email ou telefone.")
+
+    pergunta_nome = f"Novo nome [{nome_atual or ''}]: " if cliente else "Nome: "
+    while True:
+        nome = input(pergunta_nome).strip()
+        if not nome and cliente:
+            nome = nome_atual or ""
+        if nome.strip():
+            break
+        print("Erro: o nome não pode ficar vazio.")
+
+    pergunta_cpf = f"Novo CPF [{cpf_atual or ''}]" if cliente else "CPF"
+    while True:
+        cpf = normalizar_cpf(input(pergunta_cpf + " (com ou sem pontuação): "))
+        if not cpf and cliente:
+            cpf = cpf_atual or ""
+        try:
+            validar_dados_cliente(nome, cpf, id_cliente)
+            break
+        except ValueError as erro:
+            print(f"Erro: {erro}")
+
+    email = input(f"Novo email [{email_atual or ''}]: " if cliente else "Email: ").strip()
+    telefone = input(f"Novo telefone [{telefone_atual or ''}]: " if cliente else "Telefone: ").strip()
+    if cliente:
+        if email == "":
+            email = email_atual
+        elif email == "-":
+            email = ""
+        if telefone == "":
+            telefone = telefone_atual
+        elif telefone == "-":
+            telefone = ""
     return nome, cpf, email, telefone
 
 
@@ -54,11 +91,12 @@ def editar_pelo_menu():
     """Só solicita novos dados se houver clientes e o ID informado existir."""
     if not exibir_clientes():
         return
-    id_cliente = input("ID do cliente a editar: ")
-    if not cliente_existe(id_cliente):
+    id_cliente = input("ID do cliente a editar: ").strip()
+    cliente = buscar_cliente(id_cliente)
+    if cliente is None:
         print(f"Erro: nenhum cliente encontrado com o ID {id_cliente}.")
         return
-    nome, cpf, email, telefone = ler_dados_cliente(edicao=True)
+    nome, cpf, email, telefone = ler_dados_cliente(cliente)
     try:
         if editar_cliente(id_cliente, nome, cpf, email, telefone):
             print("Cliente atualizado com sucesso!")
@@ -94,7 +132,7 @@ def menu_principal():
         print("3 - Editar cliente")
         print("4 - Excluir cliente")
         print("0 - Sair")
-        opcao = input("Escolha uma opção: ")
+        opcao = input("Escolha uma opção: ").strip()
 
         if opcao == "1":
             cadastrar_pelo_menu()

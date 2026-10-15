@@ -1,8 +1,14 @@
 from database import consultar, executar
 
 
+def normalizar_cpf(cpf):
+    """Retira espaços externos, pontos e hífen antes de validar e salvar."""
+    return cpf.strip().replace(".", "").replace("-", "")
+
+
 def validar_cpf(cpf):
     """Confere os 11 dígitos e calcula os dois verificadores do CPF."""
+    cpf = normalizar_cpf(cpf)
     if len(cpf) != 11:
         return False
 
@@ -32,6 +38,7 @@ def validar_cpf(cpf):
 
 
 def cpf_ja_cadastrado(cpf, id_cliente=None):
+    cpf = normalizar_cpf(cpf)
     if id_cliente is None:
         clientes = consultar("SELECT id FROM clientes WHERE cpf = ?", (cpf,))
     else:
@@ -47,17 +54,28 @@ def cliente_existe(id_cliente):
     return len(clientes) > 0
 
 
+def buscar_cliente(id_cliente):
+    """Devolve os dados atuais para preencher a edição."""
+    clientes = consultar(
+        "SELECT id, nome, cpf, email, telefone FROM clientes WHERE id = ?", (id_cliente,)
+    )
+    if clientes:
+        return clientes[0]
+    return None
+
+
 def validar_dados_cliente(nome, cpf, id_cliente=None):
     """Aplica as mesmas regras no cadastro e na edição, sem gravar dados."""
     if not nome.strip():
         raise ValueError("o nome não pode ficar vazio.")
     if not validar_cpf(cpf):
-        raise ValueError("CPF inválido. Informe 11 dígitos, sem pontuação e com verificadores corretos.")
+        raise ValueError("CPF inválido. Informe um CPF com 11 dígitos e verificadores corretos.")
     if cpf_ja_cadastrado(cpf, id_cliente):
         raise ValueError("já existe um cliente cadastrado com esse CPF.")
 
 
 def cadastrar_cliente(nome, cpf, email, telefone):
+    cpf = normalizar_cpf(cpf)
     validar_dados_cliente(nome, cpf)
 
     executar(
@@ -73,6 +91,7 @@ def listar_clientes():
 def editar_cliente(id_cliente, nome, cpf, email, telefone):
     if not cliente_existe(id_cliente):
         return False
+    cpf = normalizar_cpf(cpf)
     validar_dados_cliente(nome, cpf, id_cliente)
 
     alterados = executar(

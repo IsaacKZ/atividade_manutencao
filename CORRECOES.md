@@ -9,5 +9,9 @@
 - Exclusão pede confirmação e só informa sucesso se remover um registro.
 - Banco usa o mesmo caminho ao iniciar o programa de outra pasta.
 - Consultas e gravações compartilham duas funções em `database.py`.
+- Edição mostra os valores atuais: Enter mantém e `-` apaga email ou telefone.
+- Nome e CPF inválidos são corrigidos no próprio campo, antes de avançar.
+- Menu, usuário e CPF ignoram espaços externos; a senha mantém seus espaços.
+- CPF aceita pontuação e é salvo só com dígitos, sem permitir duplicação por formato.
 
 Os testes cobrem essas operações. Comandos de uso e teste: [README.md](README.md).

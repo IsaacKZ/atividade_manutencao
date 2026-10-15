@@ -20,6 +20,15 @@ Para usar outro banco, informe um caminho absoluto:
 SISTEMA_DB_PATH=/tmp/teste.db python3 -B main.py
 ```
 
+## Preencher os dados
+
+- CPF pode ser digitado com ou sem pontos e hífen; o banco guarda só os dígitos.
+- Nome e CPF são conferidos antes das perguntas seguintes. Se houver erro,
+  basta corrigir o campo, sem recomeçar o cadastro ou a edição.
+- Na edição, Enter mantém o valor mostrado. Para apagar email ou telefone,
+  digite `-` no campo.
+- Espaços externos no usuário, na opção do menu e no CPF são ignorados.
+
 ## Testes
 
 ```bash

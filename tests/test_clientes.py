@@ -34,9 +34,29 @@ class ClientesTest(unittest.TestCase):
                 self.assertFalse(clientes.validar_cpf(cpf))
 
     def test_rejeita_formato_e_caracteres_fora_de_zero_a_nove(self):
-        for cpf in ("", "123", "529.982.247-25", "5299822472a", "²" * 11, "５２９９８２２４７２５"):
+        for cpf in ("", "123", "529.982.247-24", "5299822472a", "²" * 11, "５２９９８２２４７２５"):
             with self.subTest(cpf=cpf):
                 self.assertFalse(clientes.validar_cpf(cpf))
+
+    def test_cadastro_aceita_pontuacao_e_espacos_e_salva_so_digitos(self):
+        self.assertTrue(clientes.validar_cpf(" 529.982.247-25 "))
+        clientes.cadastrar_cliente("Ana", " 529.982.247-25 ", "", "")
+        self.assertEqual(clientes.listar_clientes()[0][2], "52998224725")
+
+    def test_cpf_pontuado_nao_permite_cadastro_duplicado(self):
+        clientes.cadastrar_cliente("Ana", "52998224725", "", "")
+        with self.assertRaisesRegex(ValueError, "já existe"):
+            clientes.cadastrar_cliente("Bia", "529.982.247-25", "", "")
+        self.assertEqual(len(clientes.listar_clientes()), 1)
+
+    def test_edicao_aceita_proprio_cpf_pontuado_e_rejeita_o_de_outro(self):
+        clientes.cadastrar_cliente("Ana", "52998224725", "", "")
+        clientes.cadastrar_cliente("Bia", "11144477735", "", "")
+        ident = clientes.listar_clientes()[0][0]
+        self.assertTrue(clientes.editar_cliente(ident, "Ana", "529.982.247-25", "", ""))
+        self.assertEqual(clientes.listar_clientes()[0][2], "52998224725")
+        with self.assertRaises(ValueError):
+            clientes.editar_cliente(ident, "Ana", "111.444.777-35", "", "")
 
     def test_cadastro_rejeita_cpf_sem_verificador_valido(self):
         with self.assertRaises(ValueError):
