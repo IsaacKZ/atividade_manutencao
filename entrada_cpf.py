@@ -1,5 +1,3 @@
-"""Máscara simples de CPF em terminais POSIX; outros ambientes usam input."""
-
 import codecs
 import os
 import select
@@ -13,7 +11,7 @@ except ImportError:
 
 
 def formatar_cpf(valor: str) -> str:
-    """Completa a pontuação de até 11 dígitos, preservando entradas inválidas."""
+    """Formata o CPF para exibição."""
     digitos = ""
     for posicao, caractere in enumerate(valor):
         if caractere in "0123456789":
@@ -33,7 +31,7 @@ def formatar_cpf(valor: str) -> str:
 
 
 def _configuracao_terminal():
-    """Obtém o modo atual somente onde a máscara ao digitar é compatível."""
+    """Obtém as configurações do terminal."""
     if termios is None or not sys.stdin.isatty() or not sys.stdout.isatty():
         return None
     if os.environ.get("TERM") == "dumb":
@@ -46,7 +44,7 @@ def _configuracao_terminal():
 
 
 def _ler_escape(descritor):
-    """Ignora teclas especiais e devolve texto ou interrupções após Esc."""
+    """Lê uma tecla especial."""
     if not select.select([descritor], [], [], 0.05)[0]:
         return b""
     inicio = os.read(descritor, 1)
@@ -64,7 +62,7 @@ def _ler_escape(descritor):
 
 
 def _mostrar(pergunta, valor):
-    """Exibe caracteres de controle como texto, sem executá-los no terminal."""
+    """Exibe o CPF digitado."""
     visivel = "".join(
         caractere if caractere.isprintable() else repr(caractere)[1:-1]
         for caractere in formatar_cpf(valor)
@@ -74,7 +72,7 @@ def _mostrar(pergunta, valor):
 
 
 def _ler_com_mascara(pergunta, descritor):
-    """Edita apenas o final da linha, guardando o texto original."""
+    """Lê o CPF com máscara."""
     valor = ""
     decodificar = codecs.getincrementaldecoder(sys.stdin.encoding or "utf-8")("replace")
     sys.stdout.write(pergunta)
@@ -106,7 +104,7 @@ def _ler_com_mascara(pergunta, descritor):
 
 
 def ler_cpf(pergunta: str) -> str:
-    """Lê o CPF sem normalizar; pipes e Windows usam input sem máscara ao vivo."""
+    """Lê o CPF do terminal."""
     configuracao = _configuracao_terminal()
     if configuracao is None:
         return input(pergunta)

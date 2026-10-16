@@ -1,12 +1,10 @@
-"""Páginas de dez clientes e seleção de um ID no terminal."""
-
 from clientes import listar_clientes
 
 TAMANHO_PAGINA = 10
 
 
 def _exibir_pagina(clientes, pagina):
-    """Mostra somente os registros da página indicada, começando em zero."""
+    """Exibe uma página de clientes."""
     if len(clientes) > TAMANHO_PAGINA:
         total = (len(clientes) + TAMANHO_PAGINA - 1) // TAMANHO_PAGINA
         print(f"Página {pagina + 1} de {total}")
@@ -17,7 +15,7 @@ def _exibir_pagina(clientes, pagina):
 
 
 def _mudar_pagina(comando, pagina, quantidade):
-    """Aplica p/a e informa quando não há outra página nessa direção."""
+    """Muda a página atual."""
     if comando == "p":
         if (pagina + 1) * TAMANHO_PAGINA < quantidade:
             return pagina + 1
@@ -30,7 +28,7 @@ def _mudar_pagina(comando, pagina, quantidade):
 
 
 def paginar_clientes(clientes):
-    """Mostra até dez por página e retorna se havia algum registro."""
+    """Exibe os clientes em páginas."""
     if not clientes:
         print("Nenhum cliente cadastrado.")
         return False
@@ -50,7 +48,7 @@ def paginar_clientes(clientes):
 
 
 def selecionar_cliente(acao):
-    """Permite navegar e corrigir o ID antes de editar ou excluir."""
+    """Seleciona um cliente pelo ID."""
     clientes = listar_clientes()
     if not clientes:
         print("Nenhum cliente cadastrado.")

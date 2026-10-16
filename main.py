@@ -1,5 +1,3 @@
-"""Telas de terminal: login, preenchimento dos dados e menu de clientes."""
-
 import sqlite3
 
 from auth import login
@@ -17,7 +15,7 @@ from entrada_cpf import formatar_cpf, ler_cpf
 
 
 def tela_login():
-    """Pede o usuário e a senha para entrar no menu."""
+    """Valida o login."""
     print("=== LOGIN ===")
     username = input("Usuário: ").strip()
     senha = input("Senha: ")
@@ -29,15 +27,12 @@ def tela_login():
 
 
 def exibir_clientes():
-    """Lista em páginas de dez e informa se havia clientes."""
+    """Exibe os clientes."""
     return paginar_clientes(listar_clientes())
 
 
 def ler_contato(campo, valor_atual="", edicao=False):
-    """Lê contato opcional: email exige @ e telefone aceita até 11 dígitos.
-
-    Na edição, Enter mantém e - apaga. A pontuação não conta no limite do telefone.
-    """
+    """Lê e valida um email ou telefone."""
     pergunta = f"{campo} (opcional; Enter para pular): "
     if edicao:
         pergunta = f"Novo {campo.lower()} [{valor_atual or ''}] (Enter mantém; - apaga): "
@@ -57,7 +52,7 @@ def ler_contato(campo, valor_atual="", edicao=False):
 
 
 def ler_dados_cliente(cliente=None):
-    """Retorna (nome, cpf, email, telefone), repetindo só os campos inválidos."""
+    """Lê os dados de um cliente."""
     edicao = cliente is not None
     id_cliente, nome_atual, cpf_atual, email_atual, telefone_atual = (
         cliente or (None, "", "", "", "")
@@ -79,7 +74,6 @@ def ler_dados_cliente(cliente=None):
         pergunta_cpf = f"Novo CPF [{formatar_cpf(cpf_atual or '')}] (Enter mantém): "
     while True:
         entrada = ler_cpf(pergunta_cpf).strip()
-        # Só Enter ou espaços mantêm o CPF atual na edição.
         if edicao and not entrada:
             cpf = cpf_atual or ""
         else:
@@ -96,7 +90,7 @@ def ler_dados_cliente(cliente=None):
 
 
 def cadastrar_pelo_menu():
-    """Solicita os dados e informa o resultado do cadastro."""
+    """Cadastra um cliente pelo menu."""
     nome, cpf, email, telefone = ler_dados_cliente()
     try:
         cadastrar_cliente(nome, cpf, email, telefone)
@@ -106,7 +100,7 @@ def cadastrar_pelo_menu():
 
 
 def editar_pelo_menu():
-    """Permite corrigir o ID; grava somente se os dados mudarem."""
+    """Edita um cliente pelo menu."""
     cliente = selecionar_cliente("editar")
     if cliente is None:
         return
@@ -125,7 +119,7 @@ def editar_pelo_menu():
 
 
 def excluir_pelo_menu():
-    """Identifica o cliente e exige s/sim; Enter ou n/não cancelam."""
+    """Exclui um cliente pelo menu."""
     cliente = selecionar_cliente("excluir")
     if cliente is None:
         return
@@ -149,7 +143,7 @@ def excluir_pelo_menu():
 
 
 def menu_principal():
-    """Repete as opções de clientes até o usuário escolher 0."""
+    """Mostra o menu principal."""
     while True:
         print("""
 === MENU ===
@@ -180,7 +174,7 @@ def menu_principal():
 
 
 def iniciar():
-    """Inicia o programa; trata interrupções e retorna 1 se o banco não abrir."""
+    """Inicia o programa."""
     try:
         inicializar_banco()
         while not tela_login():
