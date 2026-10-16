@@ -20,7 +20,7 @@ paginação e confirmação da versão atual estão na seção de UX abaixo.
 - Menu, usuário e CPF ignoram espaços externos; a senha mantém seus espaços.
 - CPF aceita pontuação e é salvo só com dígitos, sem permitir duplicação por formato.
 
-Os testes cobrem essas operações. Comandos de uso e teste: [README.md](README.md).
+O fluxo e as operações estão descritos em [DOCUMENTACAO.md](DOCUMENTACAO.md).
 
 ## Histórico da simplificação
 
@@ -45,7 +45,7 @@ Os testes cobrem essas operações. Comandos de uso e teste: [README.md](README.
   mantém o outro. A suíte passou de 50 para 53 testes.
 - O README passou a apresentar requisitos, uso local e banco fora do repositório
   na nuvem. A [documentação do código](DOCUMENTACAO.md) reúne fluxo, módulos,
-  campos do banco, caminhos, todas as funções, cálculo do CPF e mapa dos testes.
+  campos do banco, caminhos, todas as funções e cálculo do CPF.
 
 ## Melhorias de UX atuais — itens 2, 3, 4, 5, 6, 7 e 10
 
@@ -79,9 +79,8 @@ Os testes cobrem essas operações. Comandos de uso e teste: [README.md](README.
 
 As 24 funções da versão simplificada mantêm suas assinaturas. Foram acrescentados
 `pesquisar_clientes()` e os módulos `consulta_clientes.py` e `entrada_cpf.py`.
-Os novos grupos de testes cobrem busca, seleção, paginação, mensagens, falhas de
-banco e máscara em PTY Linux. O mapa atualizado fica na
-[documentação do código](DOCUMENTACAO.md#mapa-dos-testes).
+Busca, seleção, paginação, mensagens, falhas de banco e máscara foram verificadas
+com testes, incluindo PTY Linux.
 
 ## Correções da revisão geral — erros 3 e 4
 
@@ -98,3 +97,13 @@ banco e máscara em PTY Linux. O mapa atualizado fica na
 
 Os [limites conhecidos e a orientação para senhas antigas](REVISAO.md) permanecem
 documentados separadamente.
+
+## Validação e remoção dos testes e README
+
+Antes da remoção, foram executados 300 testes: 297 aprovados e 3 falhas
+esperadas, correspondentes aos erros conhecidos 1, 2 e 5 descritos em
+[REVISAO.md](REVISAO.md#regressões-pendentes).
+
+Por solicitação do usuário, foram removidos `tests/`, `test_sistema.py` e
+`README.md`. As referências aos arquivos removidos foram atualizadas na
+documentação restante. O código do programa e o banco foram preservados.

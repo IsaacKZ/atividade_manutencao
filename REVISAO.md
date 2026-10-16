@@ -12,6 +12,22 @@
   campo permite apagar no final com Backspace e limpar com `Ctrl+U`; as setas
   são ignoradas e não movem o cursor.
 
+## Regressões pendentes
+
+Os erros 3 e 4 da revisão geral foram corrigidos. Os três abaixo permanecem
+pendentes, conforme o escopo escolhido para aquela correção:
+
+1. **Erro 1 — Colagem CRLF:** no terminal com máscara, concluir o CPF com `\r\n`
+   deixa a quebra restante para a próxima leitura. O email pode ficar vazio e
+   o endereço informado pode ser gravado como telefone. Marcadores de colagem
+   do terminal também podem sobrar para os contatos.
+2. **Erro 2 — Edição simultânea:** a edição guarda os valores lidos inicialmente.
+   Se outra execução alterar um contato durante o formulário, salvar a edição
+   pode sobrescrever esse contato com o valor antigo.
+3. **Erro 5 — Colagem longa:** a máscara redesenha todo o conteúdo a cada tecla.
+   Uma colagem de mil caracteres gera cerca de 500 KB de saída, crescendo de
+   forma quadrática e prejudicando a resposta do terminal.
+
 ## Interrupções e falhas de banco
 
 Fim da entrada (por exemplo, `Ctrl+D` no Linux) e `Ctrl+C` encerram o programa

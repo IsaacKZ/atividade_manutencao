@@ -1,7 +1,7 @@
 # Como o programa funciona
 
-Para executar e usar o menu, veja o [README](README.md). Este documento explica
-o código e os dados. Os [limites conhecidos e a orientação para senhas da versão
+Execute o programa com `python3 -B main.py`. Este documento explica o código
+e os dados. Os [limites conhecidos e a orientação para senhas da versão
 antiga](REVISAO.md) continuam válidos.
 
 ## Fluxo e arquivos
@@ -18,7 +18,6 @@ novamente; a opção `0` encerra o programa.
 | `consulta_clientes.py` | Buscar por nome ou CPF, exibir páginas e selecionar clientes para edição ou exclusão. |
 | `entrada_cpf.py` | Formatar o CPF e, em terminais POSIX compatíveis, mostrar a máscara durante a digitação. |
 | `database.py` | Definir o caminho do SQLite, abrir conexões, executar SQL e criar as tabelas. |
-| `test_sistema.py` e `tests/` | Conferir as regras e o uso pelo terminal com bancos temporários. |
 
 No cadastro e na edição, o nome é lido primeiro. Depois, o CPF é validado antes
 de pedir os contatos. Um erro repete só o campo que precisa de correção. Os
@@ -227,31 +226,3 @@ Eles não acessam o banco.
 | Assinatura | O que faz | Retorno e erros |
 | --- | --- | --- |
 | `login(username, senha)` | Consulta os dois valores exatamente como recebidos, com parâmetros SQL. Não modifica usuários ou senhas. | `True` se encontrar a conta; `False` caso contrário. Repassa erros de SQLite. |
-
-## Mapa dos testes
-
-O comando completo está no [README](README.md#testes). Os testes usam arquivos
-temporários e substituem `DB_PATH` ou definem `SISTEMA_DB_PATH` nos processos
-do programa, mantendo o banco do projeto separado.
-
-| Arquivo | O que confere |
-| --- | --- |
-| `test_sistema.py` | Cadastro, listagem sem abrir edição, edição válida ou recusada, IDs inexistentes, login e exclusão confirmada ou cancelada. |
-| `tests/test_auth.py` | Login padrão, acertos e erros sem mudar senhas, usuário inexistente, texto SQL e comparação exata da senha. |
-| `tests/test_clientes.py` | Verificadores de CPF, caracteres permitidos, pontuação, duplicidade incluindo CPFs legados, edição do próprio CPF, nulos e preservação dos dados quando a edição falha. |
-| `tests/test_database.py` | Criação do banco e conta padrão, inicialização repetida e concorrente, preservação de usuários sem admin e caminhos padrão, absoluto e relativo. |
-| `tests/test_menu.py` | Fluxos completos do programa, campos inválidos, espaços, listagem com nulos, confirmação e manutenção ou remoção independente dos contatos. |
-| `tests/test_ux.py` | Indicações de campos opcionais, CPF inválido na edição, confirmação de exclusão, correção de ID, edição sem `UPDATE`, busca, paginação, interrupções e falhas de banco. Os casos em PTY também exercitam cadastro com máscara e interrupção no programa completo. |
-| `tests/test_entrada_cpf.py` | Máscara e preservação da entrada; alternativa por pipe; digitação, colagem, Backspace, `Ctrl+U`, setas e restauração do terminal em PTY POSIX, inclusive após EOF ou `Ctrl+C`. |
-| `tests/test_consulta_clientes.py` | Páginas, limites de navegação, listas vazias, busca no menu, correção e cancelamento de ID, seleção em outras páginas e restrição ao filtro atual. |
-| `tests/test_pesquisa.py` | Busca parcial por nome sem distinguir caixa e por CPF com ou sem pontuação, termo vazio, nulos, texto literal e preservação dos dados. |
-
-Os testes de PTY exercitam a máscara antes de Enter em um pseudoterminal Linux.
-São ignorados quando `pty` ou `termios` não estão disponíveis; os demais testes
-de formatação e leitura por pipe continuam separados desses casos.
-
-Para executar só um grupo, use, por exemplo:
-
-```bash
-python3 -B -m unittest tests.test_menu -v
-```
