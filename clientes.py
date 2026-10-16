@@ -1,3 +1,5 @@
+"""Validação de CPF e operações de cadastro, consulta, edição e exclusão."""
+
 from database import consultar, executar
 
 
@@ -12,9 +14,9 @@ def validar_cpf(cpf):
     if len(cpf) != 11:
         return False
 
-    # isdigit() também aceita símbolos como ²; aqui só aceitamos de 0 a 9.
+    # A lista explícita impede aceitar símbolos como ² e dígitos Unicode.
     for caractere in cpf:
-        if caractere < "0" or caractere > "9":
+        if caractere not in "0123456789":
             return False
 
     if cpf == cpf[0] * 11:
@@ -23,10 +25,9 @@ def validar_cpf(cpf):
     # O primeiro verificador usa os 9 primeiros dígitos; o segundo usa 10.
     for quantidade in (9, 10):
         soma = 0
-        peso = quantidade + 1
         for posicao in range(quantidade):
-            soma = soma + int(cpf[posicao]) * peso
-            peso = peso - 1
+            peso = quantidade + 1 - posicao
+            soma += int(cpf[posicao]) * peso
 
         verificador = 11 - (soma % 11)
         if verificador >= 10:
@@ -38,24 +39,27 @@ def validar_cpf(cpf):
 
 
 def cpf_ja_cadastrado(cpf, id_cliente=None):
+    """Compara CPFs normalizados, ignorando o próprio ID durante a edição."""
     cpf = normalizar_cpf(cpf)
     if id_cliente is None:
-        clientes = consultar("SELECT id FROM clientes WHERE cpf = ?", (cpf,))
+        clientes = consultar("SELECT cpf FROM clientes")
     else:
         # Na edição, o cliente pode manter o próprio CPF.
-        clientes = consultar(
-            "SELECT id FROM clientes WHERE cpf = ? AND id != ?", (cpf, id_cliente)
-        )
-    return len(clientes) > 0
+        clientes = consultar("SELECT cpf FROM clientes WHERE id != ?", (id_cliente,))
+    for (cpf_salvo,) in clientes:
+        if cpf_salvo is not None and normalizar_cpf(cpf_salvo) == cpf:
+            return True
+    return False
 
 
 def cliente_existe(id_cliente):
+    """Retorna True se há um cliente com o ID informado."""
     clientes = consultar("SELECT id FROM clientes WHERE id = ?", (id_cliente,))
-    return len(clientes) > 0
+    return bool(clientes)
 
 
 def buscar_cliente(id_cliente):
-    """Devolve os dados atuais para preencher a edição."""
+    """Retorna (id, nome, cpf, email, telefone), ou None se o ID não existir."""
     clientes = consultar(
         "SELECT id, nome, cpf, email, telefone FROM clientes WHERE id = ?", (id_cliente,)
     )
@@ -65,7 +69,7 @@ def buscar_cliente(id_cliente):
 
 
 def validar_dados_cliente(nome, cpf, id_cliente=None):
-    """Aplica as mesmas regras no cadastro e na edição, sem gravar dados."""
+    """Lança ValueError para nome vazio, CPF inválido ou CPF duplicado."""
     if not nome.strip():
         raise ValueError("o nome não pode ficar vazio.")
     if not validar_cpf(cpf):
@@ -75,6 +79,7 @@ def validar_dados_cliente(nome, cpf, id_cliente=None):
 
 
 def cadastrar_cliente(nome, cpf, email, telefone):
+    """Valida e salva o cliente com CPF sem pontuação; não retorna um valor."""
     cpf = normalizar_cpf(cpf)
     validar_dados_cliente(nome, cpf)
 
@@ -85,10 +90,31 @@ def cadastrar_cliente(nome, cpf, email, telefone):
 
 
 def listar_clientes():
+    """Retorna uma lista de tuplas (id, nome, cpf, email, telefone)."""
     return consultar("SELECT id, nome, cpf, email, telefone FROM clientes")
 
 
+def pesquisar_clientes(termo):
+    """Filtra por parte do nome ou CPF, preservando a ordem da listagem."""
+    termo = termo.strip()
+    clientes = listar_clientes()
+    if not termo:
+        return clientes
+
+    nome_procurado = termo.casefold()
+    cpf_procurado = normalizar_cpf(termo)
+    resultados = []
+    for cliente in clientes:
+        _, nome, cpf, _, _ = cliente
+        nome_confere = nome_procurado in (nome or "").casefold()
+        cpf_confere = bool(cpf_procurado) and cpf_procurado in normalizar_cpf(cpf or "")
+        if nome_confere or cpf_confere:
+            resultados.append(cliente)
+    return resultados
+
+
 def editar_cliente(id_cliente, nome, cpf, email, telefone):
+    """Valida e atualiza o cliente; retorna False se o ID não existir."""
     if not cliente_existe(id_cliente):
         return False
     cpf = normalizar_cpf(cpf)
@@ -102,5 +128,6 @@ def editar_cliente(id_cliente, nome, cpf, email, telefone):
 
 
 def excluir_cliente(id_cliente):
+    """Exclui pelo ID e retorna True somente se um registro for removido."""
     excluidos = executar("DELETE FROM clientes WHERE id = ?", (id_cliente,))
     return excluidos > 0

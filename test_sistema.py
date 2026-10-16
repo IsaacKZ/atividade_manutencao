@@ -79,7 +79,7 @@ class SistemaTest(unittest.TestCase):
         cliente = self.cadastrar()
         saida = self.executar_menu(f"3\n{cliente}\nAna\n123\n52998224725\n\n\n0\n")
         self.assertIn("CPF inválido.", saida)
-        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertIn("Nenhuma alteração realizada.", saida)
         self.assertEqual(listar_clientes()[0][2], "52998224725")
 
     def test_login_e_inicializacao_repetida(self):
@@ -98,7 +98,7 @@ class SistemaTest(unittest.TestCase):
         self.assertFalse(editar_cliente("999", "Ana", "52998224725", "", ""))
         self.assertFalse(excluir_cliente("999"))
         self.cadastrar()
-        saida = self.executar_menu("3\n999\n4\n999\n0\n")
+        saida = self.executar_menu("3\n999\n0\n4\n999\n0\n0\n")
         self.assertEqual(saida.count("nenhum cliente encontrado"), 2)
         self.assertNotIn("Novo nome", saida)
         self.assertNotIn("Tem certeza", saida)

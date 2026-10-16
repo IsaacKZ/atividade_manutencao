@@ -1,3 +1,6 @@
+"""Acesso ao SQLite e criação das tabelas, sem dependências externas."""
+
+from contextlib import closing
 import os
 import sqlite3
 
@@ -15,28 +18,21 @@ def conectar():
 
 def consultar(sql, parametros=()):
     """Executa uma consulta e devolve uma lista de linhas."""
-    conexao = conectar()
-    try:
+    with closing(conectar()) as conexao:
         return conexao.execute(sql, parametros).fetchall()
-    finally:
-        conexao.close()
 
 
 def executar(sql, parametros=()):
     """Grava uma alteração e devolve a quantidade de linhas afetadas."""
-    conexao = conectar()
-    try:
+    with closing(conectar()) as conexao:
         resultado = conexao.execute(sql, parametros)
         conexao.commit()
         return resultado.rowcount
-    finally:
-        conexao.close()
 
 
 def inicializar_banco():
     """Cria as tabelas e o login inicial, sem apagar os dados existentes."""
-    conexao = conectar()
-    try:
+    with closing(conectar()) as conexao:
         conexao.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,12 +51,10 @@ def inicializar_banco():
             )
         """)
 
-        cursor = conexao.execute("SELECT COUNT(*) FROM usuarios")
-        if cursor.fetchone()[0] == 0:
-            conexao.execute(
-                "INSERT INTO usuarios (username, senha) VALUES (?, ?)",
-                ("admin", "admin123"),
-            )
+        # Conferir e inserir no mesmo comando evita a disputa entre inicializações.
+        conexao.execute("""
+            INSERT INTO usuarios (username, senha)
+            SELECT ?, ?
+            WHERE NOT EXISTS (SELECT 1 FROM usuarios)
+        """, ("admin", "admin123"))
         conexao.commit()
-    finally:
-        conexao.close()

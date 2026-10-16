@@ -1,3 +1,5 @@
+"""Autenticação local por consulta parametrizada ao banco de usuários."""
+
 from database import consultar
 
 
@@ -7,4 +9,4 @@ def login(username, senha):
         "SELECT id FROM usuarios WHERE username = ? AND senha = ?",
         (username, senha),
     )
-    return len(usuarios) > 0
+    return bool(usuarios)

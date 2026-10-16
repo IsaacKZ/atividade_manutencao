@@ -87,7 +87,7 @@ class MenuTest(unittest.TestCase):
         self.criar_usuario_antigo()
         clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
         original = clientes.listar_clientes()
-        saida = self.executar("operador\nSenhaTeste123\n3\n999\n0\n")
+        saida = self.executar("operador\nSenhaTeste123\n3\n999\n0\n0\n")
         self.assertIn("nenhum cliente encontrado com o ID 999", saida)
         self.assertNotIn("Novo nome", saida)
         self.assertNotIn("Novo CPF", saida)
@@ -109,7 +109,7 @@ class MenuTest(unittest.TestCase):
         self.criar_usuario_antigo()
         clientes.cadastrar_cliente("Ana", "52998224725", "", "")
         original = clientes.listar_clientes()
-        saida = self.executar("operador\nSenhaTeste123\n4\n999\n0\n")
+        saida = self.executar("operador\nSenhaTeste123\n4\n999\n0\n0\n")
         self.assertIn("nenhum cliente encontrado com o ID 999", saida)
         self.assertNotIn("Tem certeza", saida)
         self.assertEqual(saida.count("=== MENU ==="), 2)
@@ -133,7 +133,7 @@ class MenuTest(unittest.TestCase):
         clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
         original = clientes.listar_clientes()
         saida = self.executar("operador\nSenhaTeste123\n3\n1\n\n\n\n\n0\n")
-        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertIn("Nenhuma alteração realizada.", saida)
         self.assertIn("ana@example.com", saida)
         self.assertEqual(clientes.listar_clientes(), original)
 
@@ -151,6 +151,31 @@ class MenuTest(unittest.TestCase):
         self.assertIn("Cliente atualizado com sucesso!", saida)
         self.assertEqual(clientes.listar_clientes()[0][1:], ("Ana", "52998224725", "", ""))
 
+    def test_cadastro_preserva_hifen_nos_contatos(self):
+        self.criar_usuario_antigo()
+        saida = self.executar(
+            "operador\nSenhaTeste123\n1\nAna\n52998224725\n-\n-\n0\n"
+        )
+        self.assertIn("Cliente cadastrado com sucesso!", saida)
+        self.assertEqual(clientes.listar_clientes()[0][3:], ("-", "-"))
+
+    def test_enter_na_edicao_preserva_contatos_nulos(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", None, None)
+        original = clientes.listar_clientes()
+        saida = self.executar("operador\nSenhaTeste123\n3\n1\n\n\n\n\n0\n")
+        self.assertIn("Novo email [] (Enter mantém; - apaga):", saida)
+        self.assertIn("Novo telefone [] (Enter mantém; - apaga):", saida)
+        self.assertIn("Nenhuma alteração realizada.", saida)
+        self.assertEqual(clientes.listar_clientes(), original)
+
+    def test_edicao_pode_apagar_um_contato_e_manter_o_outro(self):
+        self.criar_usuario_antigo()
+        clientes.cadastrar_cliente("Ana", "52998224725", "ana@example.com", "111")
+        saida = self.executar("operador\nSenhaTeste123\n3\n1\n\n\n - \n   \n0\n")
+        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertEqual(clientes.listar_clientes()[0][3:], ("", "111"))
+
     def test_nome_vazio_e_corrigido_antes_de_pedir_cpf(self):
         self.criar_usuario_antigo()
         saida = self.executar("operador\nSenhaTeste123\n1\n\n   \nAna\n52998224725\nemail\n111\n0\n")
@@ -162,7 +187,7 @@ class MenuTest(unittest.TestCase):
         self.criar_usuario_antigo()
         saida = self.executar("operador\nSenhaTeste123\n1\nAna\n123\n529.982.247-25\nemail\n111\n0\n")
         self.assertIn("Cliente cadastrado com sucesso!", saida)
-        self.assertLess(saida.index("CPF inválido."), saida.index("Email:"))
+        self.assertLess(saida.index("CPF inválido."), saida.index("Email (opcional"))
         self.assertEqual(saida.count("Nome:"), 1)
         self.assertEqual(clientes.listar_clientes()[0][1:3], ("Ana", "52998224725"))
 
@@ -188,16 +213,15 @@ class MenuTest(unittest.TestCase):
         original = clientes.listar_clientes()
         saida = self.executar("operador\nSenhaTeste123\n3\n1\n\n111.444.777-35\n\n\n\n0\n")
         self.assertIn("já existe um cliente cadastrado com esse CPF.", saida)
-        self.assertIn("Cliente atualizado com sucesso!", saida)
+        self.assertIn("Nenhuma alteração realizada.", saida)
         self.assertEqual(clientes.listar_clientes(), original)
 
-    def test_confirmacao_por_extenso_continua_cancelando_conforme_escopo(self):
+    def test_confirmacao_por_extenso_exclui_cliente(self):
         self.criar_usuario_antigo()
         clientes.cadastrar_cliente("Ana", "52998224725", "", "")
-        original = clientes.listar_clientes()
         saida = self.executar("operador\nSenhaTeste123\n4\n1\nsim\n0\n")
-        self.assertIn("Exclusão cancelada.", saida)
-        self.assertEqual(clientes.listar_clientes(), original)
+        self.assertIn("Cliente excluído com sucesso!", saida)
+        self.assertEqual(clientes.listar_clientes(), [])
 
 
 if __name__ == "__main__":

@@ -1,9 +1,12 @@
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 import os
 from pathlib import Path
 import subprocess
+import sqlite3
 import sys
 import tempfile
+from threading import Barrier
 import unittest
 from unittest.mock import patch
 
@@ -52,6 +55,64 @@ class BancoTest(unittest.TestCase):
             self.assertEqual(
                 conexao.execute("SELECT * FROM clientes").fetchall(), clientes_antes
             )
+
+    def test_inicializacao_preserva_usuario_existente_sem_criar_admin(self):
+        database.inicializar_banco()
+        database.executar("DELETE FROM usuarios")
+        database.executar(
+            "INSERT INTO usuarios (username, senha) VALUES (?, ?)", ("operador", "senha existente")
+        )
+        usuarios = database.consultar("SELECT * FROM usuarios")
+        database.inicializar_banco()
+        database.inicializar_banco()
+        self.assertEqual(database.consultar("SELECT * FROM usuarios"), usuarios)
+
+    def test_inicializacoes_concorrentes_nao_duplicam_conta_padrao(self):
+        database.inicializar_banco()
+        database.executar("DELETE FROM usuarios")
+        barreira = Barrier(2)
+        chegadas = []
+        erros_sincronizacao = []
+
+        def sincronizar_insercao(sql):
+            # Pausa antes da gravação para expor a disputa entre as duas conexões.
+            if sql.lstrip().upper().startswith("INSERT INTO USUARIOS"):
+                chegadas.append(True)
+                try:
+                    barreira.wait(timeout=3)
+                except Exception as erro:
+                    erros_sincronizacao.append(erro)
+
+        def conectar_sincronizado():
+            conexao = sqlite3.connect(self.caminho)
+            conexao.set_trace_callback(sincronizar_insercao)
+            return conexao
+
+        with patch.object(database, "conectar", conectar_sincronizado):
+            with ThreadPoolExecutor(max_workers=2) as executores:
+                tarefas = [executores.submit(database.inicializar_banco) for _ in range(2)]
+                erros = [tarefa.exception(timeout=10) for tarefa in tarefas]
+        self.assertEqual(len(chegadas), 2)
+        self.assertEqual(erros_sincronizacao, [])
+        self.assertEqual(erros, [None, None])
+        self.assertEqual(database.consultar("SELECT username, senha FROM usuarios"),
+                         [("admin", "admin123")])
+
+    def test_primeira_inicializacao_concorrente_em_banco_novo(self):
+        self.assertFalse(self.caminho.exists())
+        barreira = Barrier(8)
+
+        def iniciar_junto():
+            barreira.wait(timeout=5)
+            database.inicializar_banco()
+
+        with ThreadPoolExecutor(max_workers=8) as executores:
+            tarefas = [executores.submit(iniciar_junto) for _ in range(8)]
+            erros = [tarefa.exception(timeout=10) for tarefa in tarefas]
+        self.assertEqual(erros, [None] * 8)
+        self.assertEqual(database.consultar("SELECT username, senha FROM usuarios"),
+                         [("admin", "admin123")])
+        self.assertEqual(database.consultar("SELECT * FROM clientes"), [])
 
     def executar_em_outra_pasta(self, codigo, caminho_override=None):
         ambiente = dict(os.environ)

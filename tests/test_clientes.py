@@ -49,6 +49,54 @@ class ClientesTest(unittest.TestCase):
             clientes.cadastrar_cliente("Bia", "529.982.247-25", "", "")
         self.assertEqual(len(clientes.listar_clientes()), 1)
 
+    def test_consulta_reconhece_cpf_legado_com_pontuacao_e_espacos(self):
+        for cpf in ("529.982.247-25", " 529.982.247-25 ", "\u00a0529.982.247-25\u00a0"):
+            with self.subTest(cpf=cpf):
+                database.executar("DELETE FROM clientes")
+                database.executar(
+                    "INSERT INTO clientes (nome, cpf) VALUES (?, ?)", ("Legado", cpf)
+                )
+                self.assertTrue(clientes.cpf_ja_cadastrado("52998224725"))
+                self.assertTrue(clientes.cpf_ja_cadastrado("529.982.247-25"))
+
+    def test_cadastro_rejeita_cpf_legado_sem_alterar_registros(self):
+        database.executar(
+            "INSERT INTO clientes (nome, cpf) VALUES (?, ?)", ("Legado", "529.982.247-25")
+        )
+        originais = clientes.listar_clientes()
+        with self.assertRaisesRegex(ValueError, "já existe"):
+            clientes.cadastrar_cliente("Novo", "52998224725", "", "")
+        self.assertEqual(clientes.listar_clientes(), originais)
+
+    def test_edicao_rejeita_cpf_legado_de_outro_cliente(self):
+        database.executar(
+            "INSERT INTO clientes (nome, cpf) VALUES (?, ?)", ("Legado", "529.982.247-25")
+        )
+        clientes.cadastrar_cliente("Bia", "11144477735", "bia@example.com", "222")
+        originais = clientes.listar_clientes()
+        id_bia = originais[1][0]
+        with self.assertRaisesRegex(ValueError, "já existe"):
+            clientes.editar_cliente(id_bia, "Bia", "52998224725", "", "")
+        self.assertEqual(clientes.listar_clientes(), originais)
+
+    def test_edicao_do_proprio_cpf_legado_continua_permitida(self):
+        database.executar(
+            "INSERT INTO clientes (nome, cpf) VALUES (?, ?)", ("Legado", "529.982.247-25")
+        )
+        id_cliente = clientes.listar_clientes()[0][0]
+        self.assertFalse(clientes.cpf_ja_cadastrado("52998224725", id_cliente))
+        self.assertTrue(clientes.editar_cliente(
+            id_cliente, "Legado", "529.982.247-25", "novo@example.com", "111"
+        ))
+        self.assertEqual(clientes.listar_clientes(), [
+            (id_cliente, "Legado", "52998224725", "novo@example.com", "111")
+        ])
+
+    def test_consulta_de_duplicidade_ignora_cpf_nulo(self):
+        database.executar("INSERT INTO clientes (nome, cpf) VALUES (?, ?)", ("Sem CPF", None))
+        self.assertFalse(clientes.cpf_ja_cadastrado("52998224725"))
+        self.assertFalse(clientes.cpf_ja_cadastrado(""))
+
     def test_edicao_aceita_proprio_cpf_pontuado_e_rejeita_o_de_outro(self):
         clientes.cadastrar_cliente("Ana", "52998224725", "", "")
         clientes.cadastrar_cliente("Bia", "11144477735", "", "")
