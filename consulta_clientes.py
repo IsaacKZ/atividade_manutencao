@@ -1,9 +1,8 @@
-"""Busca, páginas de dez clientes e seleção de um ID no terminal."""
+"""Páginas de dez clientes e seleção de um ID no terminal."""
 
-from clientes import listar_clientes, pesquisar_clientes
+from clientes import listar_clientes
 
 TAMANHO_PAGINA = 10
-PERGUNTA_BUSCA = "Buscar por nome ou CPF (Enter para listar todos): "
 
 
 def _exibir_pagina(clientes, pagina):
@@ -50,17 +49,8 @@ def paginar_clientes(clientes):
             print("Comando inválido. Use p, a ou 0 para voltar.")
 
 
-def buscar_pelo_menu():
-    """Pede nome ou CPF e apresenta os resultados em páginas."""
-    encontrados = pesquisar_clientes(input(PERGUNTA_BUSCA))
-    if not encontrados:
-        print("Nenhum cliente encontrado para a busca.")
-        return
-    paginar_clientes(encontrados)
-
-
 def selecionar_cliente(acao):
-    """Permite buscar, navegar e corrigir o ID antes de editar ou excluir."""
+    """Permite navegar e corrigir o ID antes de editar ou excluir."""
     clientes = listar_clientes()
     if not clientes:
         print("Nenhum cliente cadastrado.")
@@ -68,19 +58,12 @@ def selecionar_cliente(acao):
 
     pagina = 0
     while True:
-        if clientes:
-            _exibir_pagina(clientes, pagina)
-        else:
-            print("Nenhum cliente encontrado para a busca.")
-        print("b - buscar | p - próxima | a - anterior | 0 - voltar")
+        _exibir_pagina(clientes, pagina)
+        print("p - próxima | a - anterior | 0 - voltar")
         entrada = input(f"ID do cliente a {acao}: ").strip().casefold()
         if entrada == "0":
             print("Edição cancelada." if acao == "editar" else "Exclusão cancelada.")
             return None
-        if entrada == "b":
-            clientes = pesquisar_clientes(input(PERGUNTA_BUSCA))
-            pagina = 0
-            continue
         if entrada in ("p", "a"):
             pagina = _mudar_pagina(entrada, pagina, len(clientes))
             continue

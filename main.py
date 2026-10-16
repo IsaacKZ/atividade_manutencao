@@ -11,7 +11,7 @@ from clientes import (
     normalizar_cpf,
     validar_dados_cliente,
 )
-from consulta_clientes import buscar_pelo_menu, paginar_clientes, selecionar_cliente
+from consulta_clientes import paginar_clientes, selecionar_cliente
 from database import inicializar_banco
 from entrada_cpf import formatar_cpf, ler_cpf
 
@@ -34,16 +34,20 @@ def exibir_clientes():
 
 
 def ler_contato(campo, valor_atual="", edicao=False):
-    """Lê email ou telefone; na edição, Enter mantém e - apaga o valor."""
+    """Lê contato opcional; email preenchido exige @. Enter mantém e - apaga na edição."""
     pergunta = f"{campo} (opcional; Enter para pular): "
     if edicao:
         pergunta = f"Novo {campo.lower()} [{valor_atual or ''}] (Enter mantém; - apaga): "
-    valor = input(pergunta).strip()
-    if edicao and valor == "":
-        return valor_atual
-    if edicao and valor == "-":
-        return ""
-    return valor
+    while True:
+        valor = input(pergunta).strip()
+        if edicao and valor == "":
+            return valor_atual
+        if edicao and valor == "-":
+            return ""
+        if campo == "Email" and valor and "@" not in valor:
+            print("Email inválido: inclua @ ou deixe o campo vazio.")
+            continue
+        return valor
 
 
 def ler_dados_cliente(cliente=None):
@@ -69,7 +73,7 @@ def ler_dados_cliente(cliente=None):
         pergunta_cpf = f"Novo CPF [{formatar_cpf(cpf_atual or '')}] (Enter mantém): "
     while True:
         entrada = ler_cpf(pergunta_cpf).strip()
-        # Só a entrada originalmente vazia mantém o CPF, nunca '-' ou '...'.
+        # Só Enter ou espaços mantêm o CPF atual na edição.
         if edicao and not entrada:
             cpf = cpf_atual or ""
         else:
@@ -96,7 +100,7 @@ def cadastrar_pelo_menu():
 
 
 def editar_pelo_menu():
-    """Permite buscar e corrigir o ID; grava somente se os dados mudarem."""
+    """Permite corrigir o ID; grava somente se os dados mudarem."""
     cliente = selecionar_cliente("editar")
     if cliente is None:
         return
@@ -147,7 +151,6 @@ def menu_principal():
 2 - Listar clientes
 3 - Editar cliente
 4 - Excluir cliente
-5 - Buscar clientes
 0 - Sair""")
         opcao = input("Escolha uma opção: ").strip()
 
@@ -160,8 +163,6 @@ def menu_principal():
                 editar_pelo_menu()
             elif opcao == "4":
                 excluir_pelo_menu()
-            elif opcao == "5":
-                buscar_pelo_menu()
             elif opcao == "0":
                 print("Saindo...")
                 break

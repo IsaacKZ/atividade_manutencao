@@ -74,7 +74,7 @@ def _mostrar(pergunta, valor):
 
 
 def _ler_com_mascara(pergunta, descritor):
-    """Edita apenas o final da linha, guardando o texto original para validar."""
+    """Edita apenas o final da linha, guardando o texto original."""
     valor = ""
     decodificar = codecs.getincrementaldecoder(sys.stdin.encoding or "utf-8")("replace")
     sys.stdout.write(pergunta)
