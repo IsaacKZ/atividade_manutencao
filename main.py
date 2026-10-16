@@ -34,7 +34,10 @@ def exibir_clientes():
 
 
 def ler_contato(campo, valor_atual="", edicao=False):
-    """Lê contato opcional; email preenchido exige @. Enter mantém e - apaga na edição."""
+    """Lê contato opcional: email exige @ e telefone aceita até 11 dígitos.
+
+    Na edição, Enter mantém e - apaga. A pontuação não conta no limite do telefone.
+    """
     pergunta = f"{campo} (opcional; Enter para pular): "
     if edicao:
         pergunta = f"Novo {campo.lower()} [{valor_atual or ''}] (Enter mantém; - apaga): "
@@ -46,6 +49,9 @@ def ler_contato(campo, valor_atual="", edicao=False):
             return ""
         if campo == "Email" and valor and "@" not in valor:
             print("Email inválido: inclua @ ou deixe o campo vazio.")
+            continue
+        if campo == "Telefone" and sum(caractere.isdigit() for caractere in valor) > 11:
+            print("Telefone inválido: informe no máximo 11 dígitos.")
             continue
         return valor
 
